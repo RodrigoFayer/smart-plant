@@ -18,3 +18,4 @@ Living index of the backend's documentation. Updated at the end of every TDD cyc
 | Sensor source (`MockSensorSource`, swappable for the real ESP) | [sensor-source.md](sensor-source.md) | [sensor-source.puml](diagrams/sensor-source.puml) | done — 18 tests in [test/mock/sensorSource.test.js](../test/mock/sensorSource.test.js) |
 | MQTT message handlers (`parse<Sensor>`, `dispatchMessage`) | [handlers.md](handlers.md) | [handlers.puml](diagrams/handlers.puml) | done — 55 tests in [test/handlers/](../test/handlers/) |
 | In-memory store & state orchestration (`PlantStore`) | [store.md](store.md) | [store.puml](diagrams/store.puml) | done — 12 tests in [test/store.test.js](../test/store.test.js) |
+| SQLite persistence (`createDatabase`) | [persistence.md](persistence.md) | [persistence.puml](diagrams/persistence.puml) | done — 9 tests in [test/database.test.js](../test/database.test.js) |

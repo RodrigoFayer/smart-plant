@@ -26,6 +26,7 @@ backend/
 │   ├── database.js       ← SQLite connection and migrations
 │   ├── plantLogic.js     ← calculates the Tamagotchi state
 │   ├── store.js          ← PlantStore: latest readings + live state orchestration
+│   ├── database.js       ← createDatabase: SQLite connection, schema, queries
 │   ├── mock/
 │   │   └── sensorSource.js ← generates mocked readings (swappable for the real ESP)
 │   ├── handlers/
@@ -42,6 +43,7 @@ backend/
 ├── test/
 │   ├── plantLogic.test.js  ← mirrors src/, one test file per module
 │   ├── store.test.js
+│   ├── database.test.js
 │   ├── mock/
 │   │   └── sensorSource.test.js
 │   └── handlers/

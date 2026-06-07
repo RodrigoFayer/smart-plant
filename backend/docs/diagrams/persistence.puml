@@ -1,0 +1,30 @@
+@startuml persistence
+title SQLite persistence — durably recording readings, states and waterings
+
+participant "PlantStore" as Store
+participant "createDatabase()" as DB
+database "SQLite\n(readings / states / waterings)" as SQLite
+participant "REST routes\n(/status, /history)" as Routes
+
+Store -> DB: insertReading({ sensor, data, at })
+DB -> SQLite: INSERT INTO readings\n(sensor, payload = JSON.stringify(data), created_at = at)
+
+Store -> DB: insertState({ state, reason, at })\n(on 'state' change)
+DB -> SQLite: INSERT INTO states (state, reason, created_at)
+
+Store -> DB: insertWatering({ origin, at })\n(on watering detected/manual)
+DB -> SQLite: INSERT INTO waterings (origin, created_at)
+
+...later, on an HTTP request...
+
+Routes -> DB: getReadings({ sensor, since })
+DB -> SQLite: SELECT … WHERE sensor = ? AND created_at >= ?\nORDER BY created_at ASC
+SQLite --> DB: rows (payload as JSON text)
+DB --> Routes: [{ sensor, data, at }, …]\n(payload deserialized back to data)
+
+Routes -> DB: getLatestState() / getLatestWatering()
+DB -> SQLite: SELECT … ORDER BY created_at DESC LIMIT 1
+SQLite --> DB: row or none
+DB --> Routes: { state, reason, at } / { origin, at } / null
+
+@enduml
