@@ -36,6 +36,8 @@ backend/
 │   │   ├── history.js    ← GET /history?sensor=dht11&period=24h
 │   │   └── status.js     ← GET /status (latest state of everything)
 │   └── socket.js         ← Socket.IO setup and event emission
+├── test/
+│   └── plantLogic.test.js ← mirrors src/, one test file per module
 └── db/
     └── smart-plant.db    ← generated automatically, do not commit
 ```

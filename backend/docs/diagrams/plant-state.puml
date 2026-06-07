@@ -1,0 +1,35 @@
+@startuml plant-state
+title calculatePlantState(readings) — rule evaluation order
+
+start
+
+:collect critical issues\n(soilMoisture < 20, temp > 38,\nppm > 700, lux < 50);
+
+if (2+ critical issues?) then (yes)
+  :state = sick\nreason = joined critical messages\ncolor = red;
+  stop
+else (no)
+endif
+
+if (soilMoisture < 30?) then (yes)
+  :state = thirsty\nreason = "soil below 30%"\ncolor = yellow;
+  stop
+else (no)
+endif
+
+if (temp > 35?) then (yes)
+  :state = hot\nreason = "temp above 35°C"\ncolor = orange;
+  stop
+else (no)
+endif
+
+if (lux < 100?) then (yes)
+  :state = noLight\nreason = "low light level"\ncolor = purple;
+  stop
+else (no)
+endif
+
+:state = happy\nreason = null\ncolor = green;
+stop
+
+@enduml

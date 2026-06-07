@@ -14,4 +14,4 @@ Living index of the backend's documentation. Updated at the end of every TDD cyc
 
 | Module | Doc | Diagram | Status |
 |---|---|---|---|
-| Plant logic (`calculatePlantState`) | [plant-logic.md](plant-logic.md) | [plant-state.puml](diagrams/plant-state.puml) | in progress |
+| Plant logic (`calculatePlantState`) | [plant-logic.md](plant-logic.md) | [plant-state.puml](diagrams/plant-state.puml) | done — 17 tests in [test/plantLogic.test.js](../test/plantLogic.test.js) |
