@@ -25,6 +25,8 @@ backend/
 │   ├── broker.js         ← Aedes MQTT broker
 │   ├── database.js       ← SQLite connection and migrations
 │   ├── plantLogic.js     ← calculates the Tamagotchi state
+│   ├── mock/
+│   │   └── sensorSource.js ← generates mocked readings (swappable for the real ESP)
 │   ├── handlers/
 │   │   ├── dht11.js      ← processes plant/sensors/dht11
 │   │   ├── bmp180.js
@@ -37,7 +39,9 @@ backend/
 │   │   └── status.js     ← GET /status (latest state of everything)
 │   └── socket.js         ← Socket.IO setup and event emission
 ├── test/
-│   └── plantLogic.test.js ← mirrors src/, one test file per module
+│   ├── plantLogic.test.js  ← mirrors src/, one test file per module
+│   └── mock/
+│       └── sensorSource.test.js
 └── db/
     └── smart-plant.db    ← generated automatically, do not commit
 ```

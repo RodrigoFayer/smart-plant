@@ -1,0 +1,45 @@
+@startuml sensor-source
+title Sensor source — swappable interface
+
+interface SensorSource {
+  +on(event: 'reading', listener)
+  +start()
+  +stop()
+}
+
+note right of SensorSource
+  emits 'reading' => { sensor, data }
+  sensor: dht11 | bmp180 | mq135 | rain | ldr | soil
+  data: matches the documented MQTT payload shape
+end note
+
+class MockSensorSource {
+  -interval: number
+  -timer
+  +start()
+  +stop()
+  -tick()
+}
+
+class MqttSensorSource <<future>> {
+  -mqttClient
+  +start()
+  +stop()
+  -onMessage(topic, payload)
+}
+
+SensorSource <|.. MockSensorSource
+SensorSource <|.. MqttSensorSource
+
+MockSensorSource --> "generates" "randomized readings\n(for development & tests)"
+MqttSensorSource --> "subscribes to" "plant/sensors/*\n(real ESP via MQTT)"
+
+note bottom of MqttSensorSource
+  Not implemented yet — documented here
+  so the swap point is explicit.
+  Re-emits incoming MQTT messages as
+  'reading' events with the same shape,
+  reusing the MQTT handlers for parsing.
+end note
+
+@enduml
