@@ -11,9 +11,12 @@ export function startBroker(port) {
 
   broker.on('publish', (packet, client) => {
     if (!client) return // ignore the broker's internal messages
-    const topic = packet.topic
-    const payload = JSON.parse(packet.payload.toString())
-    dispatchMessage(topic, payload)
+    // dispatchMessage parses and validates the raw payload itself —
+    // malformed JSON from the ESP returns null instead of throwing.
+    const reading = dispatchMessage(packet.topic, packet.payload)
+    if (reading) {
+      // … hand off to the in-memory store / state calculation (next cycles)
+    }
   })
 
   server.listen(port, () => {

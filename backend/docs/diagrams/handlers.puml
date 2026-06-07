@@ -1,0 +1,30 @@
+@startuml handlers
+title MQTT message handling — from raw wire payload to normalized reading
+
+participant "ESP firmware" as ESP
+participant "Aedes broker" as Broker
+participant "dispatchMessage" as Dispatch
+participant "parse<Sensor>" as Parser
+
+ESP -> Broker: publish(topic, rawPayload as Buffer)
+Broker -> Dispatch: dispatchMessage(topic, rawPayload)
+
+alt unknown topic\n(not in plant/sensors/*)
+  Dispatch --> Broker: null
+else known topic
+  Dispatch -> Dispatch: JSON.parse(rawPayload.toString())
+  alt malformed / empty JSON
+    Dispatch --> Broker: null
+  else valid JSON
+    Dispatch -> Parser: parse(payload)
+    alt missing/wrong-typed fields
+      Parser --> Dispatch: null
+      Dispatch --> Broker: null
+    else valid shape
+      Parser --> Dispatch: { ...normalizedFields }
+      Dispatch --> Broker: { sensor, data }
+    end
+  end
+end
+
+@enduml

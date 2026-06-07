@@ -40,8 +40,11 @@ backend/
 │   └── socket.js         ← Socket.IO setup and event emission
 ├── test/
 │   ├── plantLogic.test.js  ← mirrors src/, one test file per module
-│   └── mock/
-│       └── sensorSource.test.js
+│   ├── mock/
+│   │   └── sensorSource.test.js
+│   └── handlers/
+│       ├── sensorParsers.test.js
+│       └── index.test.js
 └── db/
     └── smart-plant.db    ← generated automatically, do not commit
 ```
