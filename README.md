@@ -1,83 +1,83 @@
-# Smart Plant — Vaso de Planta Inteligente 🌱
+# Smart Plant — Smart Plant Pot 🌱
 
-Sistema de monitoramento de planta com ESP12 (NodeMCU Amica), backend Node.js com broker MQTT embutido e app React Native. A planta tem uma "personalidade" estilo Tamagotchi exibida em display OLED.
+A plant-monitoring system built around an ESP12 (NodeMCU Amica), a Node.js backend with an embedded MQTT broker, and a React Native app. The plant has a Tamagotchi-style "personality" shown on an OLED display.
 
-## Estrutura do repositório
+## Repository structure
 
 ```
 smart-plant/
-├── CLAUDE.md          ← contexto geral do projeto
-├── esp/               ← firmware Arduino/C++ para o NodeMCU ESP12
-├── backend/           ← servidor Node.js (MQTT broker + API + WebSocket)
-└── frontend/          ← app React Native
+├── CLAUDE.md          ← project-wide context
+├── docs/              ← detailed project-wide documentation
+├── esp/               ← Arduino/C++ firmware for the NodeMCU ESP12
+├── backend/           ← Node.js server (MQTT broker + API + WebSocket)
+└── frontend/          ← React Native app
 ```
 
-Cada diretório possui seu próprio `CLAUDE.md` com detalhes específicos.
+Each directory has its own `CLAUDE.md` and `docs/` folder with specific details.
 
 ## Hardware
 
-| Componente | Qtd | Uso |
+| Component | Qty | Use |
 |---|---|---|
-| NodeMCU ESP12 Amica | 1 | Microcontrolador principal |
-| Display OLED 0.96" I2C (SSD1306) | 1 | Tamagotchi + leituras |
-| DHT11 | 1 | Temperatura e umidade do ar |
-| BMP180 | 1 | Pressão atmosférica (I2C) |
-| MQ135 | 1 | Qualidade do ar (ppm) |
-| Sensor de chuva | 1 | Detecção de precipitação |
-| LDR | 2 | Luminosidade (esquerda e direita) |
-| Sensor de umidade do solo HL-69 | 1 | Umidade do solo (AO + DO) |
-| Potenciômetro 10k | 1 | Ajuste fino / uso geral |
-| Buzzer ativo | 1 | Alertas sonoros |
-| LED RGB | 2 | Status geral e alertas |
-| LED diversas cores | 15 | Barra de nível de umidade do solo |
-| Push Button | 2 | BTN1: modo/silenciar — BTN2: rega manual |
+| NodeMCU ESP12 Amica | 1 | Main microcontroller |
+| 0.96" I2C OLED display (SSD1306) | 1 | Tamagotchi + readings |
+| DHT11 | 1 | Air temperature and humidity |
+| BMP180 | 1 | Atmospheric pressure (I2C) |
+| MQ135 | 1 | Air quality (ppm) |
+| Rain sensor | 1 | Precipitation detection |
+| LDR | 2 | Light level (left and right) |
+| HL-69 soil moisture sensor | 1 | Soil moisture (AO + DO) |
+| 10k potentiometer | 1 | Fine adjustment / general use |
+| Active buzzer | 1 | Sound alerts |
+| RGB LED | 2 | General status and alerts |
+| Assorted color LEDs | 15 | Soil moisture level bar |
+| Push button | 2 | BTN1: mode/mute — BTN2: manual watering |
 
-## Fluxo de dados
+## Data flow
 
 ```
 ESP12
-  └─ Wi-Fi / MQTT (porta 1883)
-        └─ Backend Node.js
-              ├─ Aedes (broker MQTT embutido)
-              ├─ Processa e persiste no banco
-              └─ Socket.IO → App React Native
+  └─ Wi-Fi / MQTT (port 1883)
+        └─ Node.js backend
+              ├─ Aedes (embedded MQTT broker)
+              ├─ Processes and persists to the database
+              └─ Socket.IO → React Native app
 ```
 
-## Tópicos MQTT
+## MQTT topics
 
-| Tópico | Direção | Payload |
+| Topic | Direction | Payload |
 |---|---|---|
-| `planta/sensores/dht11` | ESP → Backend | `{"temp": 24, "umidade": 62}` |
-| `planta/sensores/bmp180` | ESP → Backend | `{"pressao": 1013, "altitude": 0}` |
-| `planta/sensores/mq135` | ESP → Backend | `{"ppm": 320}` |
-| `planta/sensores/chuva` | ESP → Backend | `{"detectado": true}` |
-| `planta/sensores/ldr` | ESP → Backend | `{"esquerda": 680, "direita": 540}` |
-| `planta/sensores/solo` | ESP → Backend | `{"umidade": 45}` |
-| `planta/alertas` | Backend → ESP | `{"tipo": "critico", "msg": "Solo seco!"}` |
-| `planta/comandos` | App → ESP | `{"acao": "silenciar"}` |
+| `plant/sensors/dht11` | ESP → Backend | `{"temp": 24, "humidity": 62}` |
+| `plant/sensors/bmp180` | ESP → Backend | `{"pressure": 1013, "altitude": 0}` |
+| `plant/sensors/mq135` | ESP → Backend | `{"ppm": 320}` |
+| `plant/sensors/rain` | ESP → Backend | `{"detected": true}` |
+| `plant/sensors/ldr` | ESP → Backend | `{"left": 680, "right": 540}` |
+| `plant/sensors/soil` | ESP → Backend | `{"moisture": 45}` |
+| `plant/alerts` | Backend → ESP | `{"type": "critical", "msg": "Soil too dry!"}` |
+| `plant/commands` | App → ESP | `{"action": "mute"}` |
 
-## Lógica de saúde da planta (Tamagotchi)
+## Plant health logic (Tamagotchi)
 
-O estado da planta é calculado pelo backend cruzando todos os sensores:
+The plant's state is calculated by the backend by cross-referencing all sensors:
 
-- **Feliz**: solo 40–80%, temp 18–28°C, lux > 300, ppm < 400
-- **Com sede**: solo < 30% por mais de 30 min
-- **Com calor**: temp > 35°C
-- **Sem luz**: lux < 100 por mais de 2h
-- **Doente**: 2 ou mais parâmetros críticos simultaneamente
-- **Dormindo**: entre 22h–7h ou modo noturno ativo (BTN1)
+- **Happy**: soil 40–80%, temp 18–28°C, lux > 300, ppm < 400
+- **Thirsty**: soil < 30% for more than 30 min
+- **Hot**: temp > 35°C
+- **No light**: lux < 100 for more than 2h
+- **Sick**: 2 or more critical parameters at the same time
+- **Sleeping**: between 10pm–7am or night mode active (BTN1)
 
-O estado é publicado via Socket.IO para o app e exibido no OLED do ESP.
+The state is published via Socket.IO to the app and shown on the ESP's OLED display.
 
-## Convenções gerais
+## General conventions
 
-- Português para variáveis de domínio (`umidadeSolo`, `estadoPlanta`)
-- Inglês para infraestrutura e nomes de função (`connectMQTT`, `publishSensor`)
-- Nunca commitar credenciais — usar `.env` em todos os projetos
-- Intervalo padrão de leitura dos sensores: **5 segundos**
+- English everywhere — code, identifiers, domain names, comments, and documentation
+- Never commit credentials — use `.env` in every project
+- Default sensor reading interval: **5 seconds**
 
-## Componentes
+## Components
 
-- [esp/](esp/) — Firmware do NodeMCU ESP12 (Arduino/C++)
-- [backend/](backend/) — Servidor Node.js (broker MQTT + API + WebSocket)
-- [frontend/](frontend/) — App React Native
+- [esp/](esp/) — NodeMCU ESP12 firmware (Arduino/C++)
+- [backend/](backend/) — Node.js server (MQTT broker + API + WebSocket)
+- [frontend/](frontend/) — React Native app
