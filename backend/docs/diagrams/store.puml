@@ -1,0 +1,27 @@
+@startuml store
+title PlantStore — ingest, snapshot, and state recomputation
+
+participant "Broker /\ndispatchMessage" as Source
+participant "PlantStore" as Store
+participant "calculatePlantState" as Logic
+participant "Listeners\n(Socket.IO, persistence, …)" as Listeners
+
+Source -> Store: ingest({ sensor, data })
+Store -> Store: readings[sensor] = { ...data, at: Date.now() }
+Store -> Listeners: emit('reading', { sensor, data, at })
+
+alt snapshot incomplete\n(missing dht11 / soil / mq135 / ldr)
+  Store --> Source: getState() → null
+else snapshot complete
+  Store -> Store: buildSnapshot(readings)\n(maps raw readings, derives lux from ldr)
+  Store -> Logic: calculatePlantState(snapshot)
+  Logic --> Store: { state, reason, color }
+
+  alt state or reason changed since last computation
+    Store -> Listeners: emit('state', { state, reason, color })
+  else unchanged
+    Store -> Store: (no event — avoid noisy duplicates)
+  end
+end
+
+@enduml
