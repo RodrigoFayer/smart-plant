@@ -1,5 +1,6 @@
 # Implementation rules
 
+- Every test suite must cover **all flows** of the module — happy path, edge cases, and error handling — before the module is considered done. When writing or reviewing tests, explicitly check which flows exist and confirm each one has a corresponding test
 - Keep the latest value of each sensor in memory (`Map` or global object) — don't hit the database on every state calculation
 - Recalculate the plant state on every new reading received
 - Persist readings to the database asynchronously — don't block the MQTT handler
