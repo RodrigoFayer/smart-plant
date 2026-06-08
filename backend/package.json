@@ -8,6 +8,9 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "better-sqlite3": "^12.10.0"
+    "aedes": "^1.0.2",
+    "better-sqlite3": "^12.10.0",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
   }
 }

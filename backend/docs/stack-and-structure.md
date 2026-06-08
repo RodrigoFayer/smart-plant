@@ -27,6 +27,10 @@ backend/
 │   ├── plantLogic.js     ← calculates the Tamagotchi state
 │   ├── store.js          ← PlantStore: latest readings + live state orchestration
 │   ├── database.js       ← createDatabase: SQLite connection, schema, queries
+│   ├── broker.js         ← Aedes MQTT broker + handlePublish
+│   ├── socket.js         ← Socket.IO real-time events
+│   ├── routes/
+│   │   └── index.js      ← createApp: GET /status, GET /history
 │   ├── mock/
 │   │   └── sensorSource.js ← generates mocked readings (swappable for the real ESP)
 │   ├── handlers/
@@ -44,6 +48,8 @@ backend/
 │   ├── plantLogic.test.js  ← mirrors src/, one test file per module
 │   ├── store.test.js
 │   ├── database.test.js
+│   ├── broker.test.js
+│   └── routes.test.js
 │   ├── mock/
 │   │   └── sensorSource.test.js
 │   └── handlers/

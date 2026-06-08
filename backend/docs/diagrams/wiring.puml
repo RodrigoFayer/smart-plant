@@ -1,0 +1,47 @@
+@startuml wiring
+title Full system — boot order and runtime data flow
+
+participant "MockSensorSource\n(or future MqttSensorSource)" as Source
+participant "PlantStore" as Store
+participant "handlePublish /\nAedes broker" as Broker
+participant "createDatabase" as DB
+participant "Express\n(/status, /history)" as HTTP
+participant "Socket.IO" as WS
+participant "React Native app" as App
+
+== Boot ==
+[-> DB: createDatabase(DB_PATH)
+[-> Store: new PlantStore()
+Store -> DB: on('state') → insertState(...)
+[-> HTTP: createApp({ store, db })
+HTTP -> WS: createSocketServer(httpServer, store)
+Store -> WS: on('reading') → emit sensor:update
+Store -> WS: on('state') → emit plant:state
+[-> Broker: startBroker(PORT_MQTT, { store, db })
+[-> Source: source.start()
+
+== Runtime (mock source tick every 5 s) ==
+Source -> Store: ingest({ sensor, data })
+Source -> DB: insertReading({ sensor, data, at })
+Store -> Store: buildSnapshot → calculatePlantState
+Store -> WS: emit('state') if changed
+WS -> App: plant:state { state, reason, color }
+Store -> WS: emit('reading')
+WS -> App: sensor:update { sensor, data, at }
+
+== Runtime (real ESP, future) ==
+note over Broker: ESP publishes to plant/sensors/*\nAedes fires 'publish' event
+Broker -> Store: store.ingest(reading)
+Broker -> DB: db.insertReading(...)
+
+== REST requests ==
+App -> HTTP: GET /status
+HTTP -> Store: getState(), getReadings()
+HTTP -> DB: getLatestWatering()
+HTTP --> App: { plant, sensors, lastWatering }
+
+App -> HTTP: GET /history?sensor=soil&period=1h
+HTTP -> DB: getReadings({ sensor, since })
+HTTP --> App: [{ sensor, data, at }, …]
+
+@enduml
