@@ -1,0 +1,10 @@
+# PlatformIO build output
+.pio/
+.pioenvs/
+
+# User-specific IDE files
+.vscode/
+.idea/
+
+# Never commit real credentials
+src/config.h
