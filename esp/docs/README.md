@@ -26,3 +26,4 @@ python3 -m platformio test -e native
 | Sensor math (`soilMoisturePercent`, `isMq135Ready`) | [sensors.md](sensors.md) | — | done — 13 tests in [test/test_sensors/test_sensors.cpp](../test/test_sensors/test_sensors.cpp) |
 | MQTT builders (`buildTopic`, `buildPayload*`, `buildPayloadCommand`) | [mqtt.md](mqtt.md) | [mqtt.puml](diagrams/mqtt.puml) | done — 21 tests in [test/test_mqtt/test_mqtt.cpp](../test/test_mqtt/test_mqtt.cpp) |
 | LED mapping (`rgbStatusColor`, `rgbAlertColor`, `soilBarSegments`, `soilBarColor`) | [leds.md](leds.md) | [leds.puml](diagrams/leds.puml) | done — 31 tests in [test/test_leds/test_leds.cpp](../test/test_leds/test_leds.cpp) |
+| Button debounce & short/long press (`buttonTick`) | [buttons.md](buttons.md) | [buttons.puml](diagrams/buttons.puml) | done — 13 tests in [test/test_buttons/test_buttons.cpp](../test/test_buttons/test_buttons.cpp) |
