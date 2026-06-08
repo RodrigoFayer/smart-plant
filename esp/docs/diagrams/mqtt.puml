@@ -1,0 +1,36 @@
+@startuml mqtt
+title ESP — MQTT publish flow (sensor reading cycle)
+
+participant "main.cpp\n(loop)" as Main
+participant "sensors.h" as Sensors
+participant "mqtt.h" as Mqtt
+participant "PubSubClient" as Client
+participant "Aedes broker\n(backend)" as Broker
+
+Main -> Sensors: soilMoisturePercent(analogRead(A0))
+Sensors --> Main: moisture %
+
+Main -> Mqtt: buildTopic(buf, size, "soil")
+Mqtt --> Main: "plant/sensors/soil"
+
+Main -> Mqtt: buildPayloadSoil(buf, size, moisture)
+Mqtt --> Main: {"moisture":45}
+
+Main -> Client: publish(topic, payload)
+Client -> Broker: MQTT publish
+
+note over Main
+  Same pattern for every sensor:
+  dht11, bmp180, mq135, rain, ldr
+  — only the builder function changes.
+end note
+
+== BTN2 pressed — manual watering ==
+
+Main -> Mqtt: buildPayloadCommand(buf, size,\n"manual_watering", now)
+Mqtt --> Main: {"action":"manual_watering","timestamp":...}
+
+Main -> Client: publish("plant/commands", payload)
+Client -> Broker: MQTT publish
+
+@enduml

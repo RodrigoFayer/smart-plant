@@ -23,4 +23,5 @@ python3 -m platformio test -e native
 
 | Module | Doc | Diagram | Status |
 |---|---|---|---|
-| Sensor math (`soilMoisturePercent`, `isMq135Ready`) | [sensors.md](sensors.md) | — | done — 13 tests in [test/test_sensors.cpp](../test/test_sensors.cpp) |
+| Sensor math (`soilMoisturePercent`, `isMq135Ready`) | [sensors.md](sensors.md) | — | done — 13 tests in [test/test_sensors/test_sensors.cpp](../test/test_sensors/test_sensors.cpp) |
+| MQTT builders (`buildTopic`, `buildPayload*`, `buildPayloadCommand`) | [mqtt.md](mqtt.md) | [mqtt.puml](diagrams/mqtt.puml) | done — 21 tests in [test/test_mqtt/test_mqtt.cpp](../test/test_mqtt/test_mqtt.cpp) |
