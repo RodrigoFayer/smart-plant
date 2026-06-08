@@ -1,0 +1,58 @@
+@startuml display
+skinparam StateBackgroundColor #f5f5f5
+skinparam StateBorderColor #666
+skinparam ArrowColor #333
+skinparam DefaultFontName monospace
+
+title OLED display modes and Tamagotchi expression mapping
+
+' ── Display mode state machine ─────────────────────────────────────────────
+
+state "Normal mode" as NORMAL {
+    state "Tamagotchi expression" as EXPR
+    state "Sensor bars (soil / temp / lux)" as BARS
+    state "Footer message" as FOOTER
+}
+
+state "Night mode" as NIGHT
+state "Economy OFF" as ECO_OFF
+
+[*] --> NORMAL
+
+NORMAL --> NIGHT     : isNightHour(hour)
+NIGHT  --> NORMAL    : !isNightHour(hour)
+
+NORMAL  --> ECO_OFF  : isEconomyTimedOut(lastEventAt, now, 30000)
+ECO_OFF --> NORMAL   : button press or new alert\n(lastEventAt = now)
+
+' ── State → Expression mapping ─────────────────────────────────────────────
+
+note as N1
+  **stateToExpression()**
+  "happy"    → EXPR_HAPPY
+  "thirsty"  → EXPR_THIRSTY
+  "hot"      → EXPR_HOT
+  "noLight"  → EXPR_NO_LIGHT
+  "sick"     → EXPR_SICK
+  "sleeping" → EXPR_SLEEPING
+  unknown    → EXPR_HAPPY
+end note
+
+' ── Sensor bar mapping ──────────────────────────────────────────────────────
+
+note as N2
+  **sensorBarHeight(value, min, max, maxPx)**
+  Linear map with constrain.
+  e.g. soil 50% → 10/20px
+       temp 25°C (0–40) → 20/32px
+end note
+
+' ── Night hour rule ─────────────────────────────────────────────────────────
+
+note as N3
+  **isNightHour(hour)**
+  true  → hour ≥ 22 or hour ≤ 6
+  false → hour 7–21
+end note
+
+@enduml
