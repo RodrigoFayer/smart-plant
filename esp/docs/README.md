@@ -23,3 +23,4 @@ python3 -m platformio test -e native
 
 | Module | Doc | Diagram | Status |
 |---|---|---|---|
+| Sensor math (`soilMoisturePercent`, `isMq135Ready`) | [sensors.md](sensors.md) | — | done — 13 tests in [test/test_sensors.cpp](../test/test_sensors.cpp) |
