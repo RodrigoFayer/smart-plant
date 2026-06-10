@@ -12,10 +12,22 @@ export function handlePublish(packet, client, { store, db }) {
 
 export async function startBroker(port, { store, db }) {
   const broker = new Aedes()
+  await broker.listen()
   const server = createServer(broker.handle)
 
   broker.on('publish', (packet, client) => {
     handlePublish(packet, client, { store, db })
+  })
+
+  // Forward the calculated plant state back to the ESP so its OLED/Tamagotchi
+  // reflects the same state shown in the backend/app.
+  store.on('state', ({ state, reason }) => {
+    broker.publish({
+      topic: 'plant/state',
+      payload: JSON.stringify({ state, reason }),
+      qos: 0,
+      retain: true,
+    }, () => {})
   })
 
   await new Promise((resolve) => server.listen(port, resolve))
