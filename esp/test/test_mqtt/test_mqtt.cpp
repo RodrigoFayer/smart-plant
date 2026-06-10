@@ -20,17 +20,16 @@ void test_topic_soil() {
 }
 
 void test_topic_all_sensors() {
-    const char* sensors[] = { "dht11", "bmp180", "mq135", "rain", "ldr", "soil" };
+    const char* sensors[] = { "dht11", "mq135", "rain", "ldr", "soil" };
     const char* expected[] = {
         "plant/sensors/dht11",
-        "plant/sensors/bmp180",
         "plant/sensors/mq135",
         "plant/sensors/rain",
         "plant/sensors/ldr",
         "plant/sensors/soil",
     };
     char buf[64];
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 5; i++) {
         buildTopic(buf, sizeof(buf), sensors[i]);
         TEST_ASSERT_EQUAL_STRING(expected[i], buf);
     }
@@ -54,20 +53,6 @@ void test_payload_dht11_zero_values() {
     char buf[64];
     buildPayloadDht11(buf, sizeof(buf), 0, 0);
     TEST_ASSERT_EQUAL_STRING("{\"temp\":0,\"humidity\":0}", buf);
-}
-
-// ─── buildPayloadBmp180 ───────────────────────────────────────────────────────
-
-void test_payload_bmp180_nominal() {
-    char buf[64];
-    buildPayloadBmp180(buf, sizeof(buf), 1013, 0);
-    TEST_ASSERT_EQUAL_STRING("{\"pressure\":1013,\"altitude\":0}", buf);
-}
-
-void test_payload_bmp180_nonzero_altitude() {
-    char buf[64];
-    buildPayloadBmp180(buf, sizeof(buf), 950, 700);
-    TEST_ASSERT_EQUAL_STRING("{\"pressure\":950,\"altitude\":700}", buf);
 }
 
 // ─── buildPayloadMq135 ────────────────────────────────────────────────────────
@@ -167,9 +152,6 @@ int main() {
     RUN_TEST(test_payload_dht11_nominal);
     RUN_TEST(test_payload_dht11_negative_temp);
     RUN_TEST(test_payload_dht11_zero_values);
-
-    RUN_TEST(test_payload_bmp180_nominal);
-    RUN_TEST(test_payload_bmp180_nonzero_altitude);
 
     RUN_TEST(test_payload_mq135_nominal);
     RUN_TEST(test_payload_mq135_above_critical_threshold);

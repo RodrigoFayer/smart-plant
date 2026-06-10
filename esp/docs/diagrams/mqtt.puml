@@ -21,7 +21,7 @@ Client -> Broker: MQTT publish
 
 note over Main
   Same pattern for every sensor:
-  dht11, bmp180, mq135, rain, ldr
+  dht11, mq135, rain, ldr
   — only the builder function changes.
 end note
 

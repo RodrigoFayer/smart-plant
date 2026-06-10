@@ -9,10 +9,6 @@ void buildPayloadDht11(char* buf, size_t size, int temp, int humidity) {
     snprintf(buf, size, "{\"temp\":%d,\"humidity\":%d}", temp, humidity);
 }
 
-void buildPayloadBmp180(char* buf, size_t size, int pressure, int altitude) {
-    snprintf(buf, size, "{\"pressure\":%d,\"altitude\":%d}", pressure, altitude);
-}
-
 void buildPayloadMq135(char* buf, size_t size, int ppm) {
     snprintf(buf, size, "{\"ppm\":%d}", ppm);
 }

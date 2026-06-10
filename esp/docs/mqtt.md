@@ -15,7 +15,6 @@ Writes `plant/sensors/<sensor>` into `buf`. Sensor names match the MQTT topic ta
 | `sensor` | Result |
 |---|---|
 | `"dht11"` | `plant/sensors/dht11` |
-| `"bmp180"` | `plant/sensors/bmp180` |
 | `"mq135"` | `plant/sensors/mq135` |
 | `"rain"` | `plant/sensors/rain` |
 | `"ldr"` | `plant/sensors/ldr` |
@@ -28,7 +27,6 @@ One function per sensor — each produces the exact JSON shape the backend's `pa
 | Function | Signature | Output |
 |---|---|---|
 | `buildPayloadDht11` | `(buf, size, int temp, int humidity)` | `{"temp":24,"humidity":62}` |
-| `buildPayloadBmp180` | `(buf, size, int pressure, int altitude)` | `{"pressure":1013,"altitude":0}` |
 | `buildPayloadMq135` | `(buf, size, int ppm)` | `{"ppm":320}` |
 | `buildPayloadRain` | `(buf, size, bool detected)` | `{"detected":true}` |
 | `buildPayloadLdr` | `(buf, size, int left, int right)` | `{"left":680,"right":540}` |

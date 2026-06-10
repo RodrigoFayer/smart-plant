@@ -17,8 +17,6 @@ framework = arduino
 lib_deps =
     knolleary/PubSubClient        ; MQTT
     adafruit/DHT sensor library   ; DHT11
-    adafruit/Adafruit BMP085 Unified ; BMP180
-    adafruit/Adafruit Unified Sensor
     adafruit/Adafruit SSD1306     ; OLED
     adafruit/Adafruit GFX Library
     arduino-libraries/NTPClient   ; time for night mode
@@ -28,17 +26,15 @@ lib_deps =
 
 | ESP pin | Component | Notes |
 |---|---|---|
-| D1 (GPIO5) | SCL | I2C — shared by BMP180 and OLED |
-| D2 (GPIO4) | SDA | I2C — shared by BMP180 and OLED |
+| D0 (GPIO16) | MQ135 (DO) | LM393 digital threshold (LOW = poor air quality) |
+| D1 (GPIO5) | SCL | I2C — OLED |
+| D2 (GPIO4) | SDA | I2C — OLED |
 | D3 (GPIO0) | DHT11 | Data |
 | D4 (GPIO2) | Buzzer | Active — HIGH = on |
-| D5 (GPIO14) | Rain sensor | Module's digital OUT |
+| D5 (GPIO14) | Rain sensor (DO) | LM393 digital OUT (LOW = rain) |
 | D6 (GPIO12) | BTN1 | 10kΩ pull-down to GND |
 | D7 (GPIO13) | BTN2 | 10kΩ pull-down to GND |
 | A0 | HL-69 (AO) | Analog soil-moisture reading |
-| D8 (GPIO15) | Left LDR | Divider with 10kΩ |
-| D0 (GPIO16) | Right LDR | Divider with 10kΩ |
-| D4–D9 (via 74HC595 shift register) | Soil-level LED bar | 5 LEDs — DATA/LATCH/CLK |
+| D8 (GPIO15) | Left LDR | Voltage divider (digital threshold) |
 
-> The RGB LEDs use 3 pins each (R, G, B) with a 220Ω resistor in series.
-> If you run out of pins, use the 74HC595 shift register to expand digital outputs.
+> The ESP8266 has a single ADC (A0), already used by the soil sensor. LDR and MQ135 are read as digital threshold comparators instead. A second LDR (right) is deferred — no free GPIO left for it.

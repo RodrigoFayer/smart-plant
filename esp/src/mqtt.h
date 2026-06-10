@@ -9,7 +9,6 @@ void buildTopic(char* buf, size_t size, const char* sensor);
 
 // One builder per sensor — matches the JSON shapes the backend expects.
 void buildPayloadDht11  (char* buf, size_t size, int temp, int humidity);
-void buildPayloadBmp180 (char* buf, size_t size, int pressure, int altitude);
 void buildPayloadMq135  (char* buf, size_t size, int ppm);
 void buildPayloadRain   (char* buf, size_t size, bool detected);
 void buildPayloadLdr    (char* buf, size_t size, int left, int right);

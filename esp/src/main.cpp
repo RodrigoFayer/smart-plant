@@ -2,7 +2,6 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <DHT.h>
-#include <Adafruit_BMP085_U.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
 #include <NTPClient.h>
@@ -13,19 +12,21 @@
 #include "config.h"
 #include "sensors.h"
 #include "mqtt.h"
-#include "leds.h"
 #include "buttons.h"
 #include "display.h"
+
+// Night mode dims the OLED to near-invisible — disabled for now while
+// bringing up hardware. Set to 1 to re-enable.
+#define ENABLE_NIGHT_MODE 0
 
 // ── Hardware objects ──────────────────────────────────────────────────────────
 
 static WiFiClient            wifiClient;
 static PubSubClient          mqttClient(wifiClient);
 static DHT                   dht(PIN_DHT11, DHT11);
-static Adafruit_BMP085_Unified bmp(10085);
 static Adafruit_SSD1306      oled(128, 64, &Wire, -1);
 static WiFiUDP               ntpUDP;
-static NTPClient             ntp(ntpUDP, "pool.ntp.org", 0, 60000);
+static NTPClient             ntp(ntpUDP, "pool.ntp.org", -10800, 60000); // UTC-3 (Brasília)
 
 // ── Runtime state ─────────────────────────────────────────────────────────────
 
@@ -36,45 +37,25 @@ static char  plantState[16]  = "happy";
 static bool  buzzerMuted     = false;
 static bool  oledOn          = true;
 
-static unsigned long bootTime    = 0;
-static unsigned long lastReadAt  = 0;
-static unsigned long lastEventAt = 0;
+static unsigned long bootTime       = 0;
+static unsigned long lastReadAt     = 0;
+static unsigned long lastEventAt    = 0;
+static unsigned long lastMqttAttempt = 0;
+static const unsigned long MQTT_RETRY_MS = 5000;
 
-static int   lastSoil = 0;
+static int   lastSoil    = 0;
+static int   lastSoilRaw = 0;
 static int   lastTemp = 0;
 static int   lastLux  = 0;
-
-// ── Shift register ────────────────────────────────────────────────────────────
-
-// Two chained 74HC595:
-//   byte1 (sent first, ends up in second register): soil bar — bits 4:0 = segments
-//   byte2 (sent second, ends up in first register): LEDs — bits 7:5 = RGB1, 4:2 = RGB2
-static void shiftOut2(byte leds, byte bar) {
-    digitalWrite(PIN_SR_LATCH, LOW);
-    shiftOut(PIN_SR_DATA, PIN_SR_CLK, MSBFIRST, bar);
-    shiftOut(PIN_SR_DATA, PIN_SR_CLK, MSBFIRST, leds);
-    digitalWrite(PIN_SR_LATCH, HIGH);
-}
-
-// Encode a LedColor into 3 bits (R G B) for the shift register byte.
-static byte colorBits(LedColor c) {
-    bool r = (c == LED_RED    || c == LED_YELLOW || c == LED_PURPLE);
-    bool g = (c == LED_GREEN  || c == LED_YELLOW);
-    bool b = (c == LED_BLUE   || c == LED_PURPLE);
-    return (r ? 4 : 0) | (g ? 2 : 0) | (b ? 1 : 0);
-}
-
-static void updateLeds(LedColor status, LedColor alert, int moisture) {
-    byte leds = (colorBits(status) << 5) | (colorBits(alert) << 2);
-    byte bar  = (byte)((1 << soilBarSegments(moisture)) - 1);
-    shiftOut2(leds, bar);
-}
+static int   lastHum  = 0;
+static bool  dhtOk    = false;
 
 // ── Display rendering ─────────────────────────────────────────────────────────
 
 static void renderNormal(int soil, int temp, int lux) {
     static const char* const exprSymbols[] = { ":)", ":(", ">.<", "-_-", ">_<", "zzz" };
 
+    oled.dim(false);
     oled.clearDisplay();
 
     // Tamagotchi expression — left side, large
@@ -101,6 +82,23 @@ static void renderNormal(int soil, int temp, int lux) {
     oled.setCursor(0, 56);
     oled.print(stateToFooter(plantState));
 
+    // Show raw DHT11 reading and soil ADC value so they're visible
+    // without a serial monitor.
+    oled.setCursor(40, 0);
+    if (dhtOk) {
+        oled.print("DHT ");
+        oled.print(lastTemp);
+        oled.print((char)247);
+        oled.print("C ");
+        oled.print(lastHum);
+        oled.print("%");
+    } else {
+        oled.print("DHT ERR");
+    }
+    oled.setCursor(40, 8);
+    oled.print("Soil raw:");
+    oled.print(lastSoilRaw);
+
     oled.display();
 }
 
@@ -120,7 +118,10 @@ static void renderNight() {
 
 static void updateDisplay() {
     int  hour     = (int)ntp.getHours();
-    bool night    = isNightHour(hour);
+    // NTP not synced yet ⇒ epoch is still near 0 (time since boot).
+    // Don't treat that as midnight/night mode.
+    bool ntpReady = ntp.getEpochTime() > 1000000000UL;
+    bool night    = ENABLE_NIGHT_MODE && ntpReady && isNightHour(hour);
     bool timedOut = isEconomyTimedOut(lastEventAt, millis(), ECONOMY_TIMEOUT_MS);
 
     if (night) {
@@ -165,16 +166,18 @@ static void onMessage(char* topic, byte* payload, unsigned int len) {
     }
 }
 
-static void connectMqtt() {
-    Serial.print("MQTT connecting");
-    while (!mqttClient.connect(MQTT_CLIENT)) {
-        Serial.print(".");
-        delay(500);
+// Single, non-blocking connection attempt — returns true on success.
+// Retried periodically from loop() so a missing broker never blocks setup().
+static bool connectMqtt() {
+    if (mqttClient.connect(MQTT_CLIENT)) {
+        mqttClient.subscribe("plant/state");
+        mqttClient.subscribe("plant/alerts");
+        mqttClient.subscribe("plant/commands");
+        Serial.println("MQTT connected");
+        return true;
     }
-    Serial.println(" connected");
-    mqttClient.subscribe("plant/state");
-    mqttClient.subscribe("plant/alerts");
-    mqttClient.subscribe("plant/commands");
+    Serial.println("MQTT connect failed");
+    return false;
 }
 
 // ── Sensor read + publish ─────────────────────────────────────────────────────
@@ -187,20 +190,13 @@ static void readAndPublish() {
     // DHT11 — temperature and humidity
     float temp     = dht.readTemperature();
     float humidity = dht.readHumidity();
-    if (!isnan(temp) && !isnan(humidity)) {
+    dhtOk = !isnan(temp) && !isnan(humidity);
+    if (dhtOk) {
         buildTopic(topic, sizeof(topic), "dht11");
         buildPayloadDht11(payload, sizeof(payload), (int)temp, (int)humidity);
         mqttClient.publish(topic, payload);
         lastTemp = (int)temp;
-    }
-
-    // BMP180 — atmospheric pressure
-    sensors_event_t event;
-    if (bmp.getEvent(&event) && event.pressure > 0) {
-        float altitude = bmp.pressureToAltitude(SENSORS_PRESSURE_SEALEVELHPA, event.pressure);
-        buildTopic(topic, sizeof(topic), "bmp180");
-        buildPayloadBmp180(payload, sizeof(payload), (int)event.pressure, (int)altitude);
-        mqttClient.publish(topic, payload);
+        lastHum  = (int)humidity;
     }
 
     // Soil moisture (HL-69)
@@ -209,16 +205,15 @@ static void readAndPublish() {
     buildTopic(topic, sizeof(topic), "soil");
     buildPayloadSoil(payload, sizeof(payload), moisture);
     mqttClient.publish(topic, payload);
-    lastSoil = moisture;
+    lastSoil    = moisture;
+    lastSoilRaw = soilRaw;
 
-    // LDR — light level (left + right)
-    int ldrLeft  = analogRead(PIN_LDR_LEFT);
-    int ldrRight = analogRead(PIN_LDR_RIGHT);
+    // LDR — light level (left only for now; digital threshold via voltage divider)
+    int ldrLeft = digitalRead(PIN_LDR_LEFT);
     buildTopic(topic, sizeof(topic), "ldr");
-    buildPayloadLdr(payload, sizeof(payload), ldrLeft, ldrRight);
+    buildPayloadLdr(payload, sizeof(payload), ldrLeft, 0);
     mqttClient.publish(topic, payload);
-    int avg = (ldrLeft + ldrRight) / 2;
-    lastLux = (int)round(((1023.0f - avg) / 1023.0f) * 1000.0f);
+    lastLux = ldrLeft ? 1000 : 0;
 
     // Rain sensor (LOW = rain detected on most modules)
     bool rain = digitalRead(PIN_RAIN) == LOW;
@@ -226,27 +221,23 @@ static void readAndPublish() {
     buildPayloadRain(payload, sizeof(payload), rain);
     mqttClient.publish(topic, payload);
 
-    // MQ135 — air quality, only after warm-up
+    // MQ135 — air quality (digital threshold for now), only after warm-up
     int ppm = 0;
     if (isMq135Ready(now, bootTime)) {
-        ppm = analogRead(PIN_MQ135);
+        bool badAir = digitalRead(PIN_MQ135_DO) == LOW;
+        ppm = badAir ? 1023 : 0;
         buildTopic(topic, sizeof(topic), "mq135");
         buildPayloadMq135(payload, sizeof(payload), ppm);
         mqttClient.publish(topic, payload);
     }
 
-    // Update LEDs and display with fresh values
-    LedColor statusColor = rgbStatusColor(plantState);
-    LedColor alertColor  = isMq135Ready(now, bootTime)
-                               ? rgbAlertColor(rain, lastTemp, moisture, ppm)
-                               : LED_OFF;
-    updateLeds(statusColor, alertColor, moisture);
     updateDisplay();
 }
 
 // ── Button actions ────────────────────────────────────────────────────────────
 
 static void handleBtn1Short() {
+    Serial.println("BTN1 short press");
     // Wake display if off, otherwise just reset the economy timer
     lastEventAt = millis();
     if (!oledOn) {
@@ -283,49 +274,113 @@ void setup() {
     lastEventAt = bootTime;
 
     // Pin modes
-    pinMode(PIN_BUZZER,   OUTPUT);  digitalWrite(PIN_BUZZER, LOW);
-    pinMode(PIN_RAIN,     INPUT);
-    pinMode(PIN_BTN1,     INPUT);
-    pinMode(PIN_BTN2,     INPUT);
-    pinMode(PIN_SR_DATA,  OUTPUT);
-    pinMode(PIN_SR_LATCH, OUTPUT);
-    pinMode(PIN_SR_CLK,   OUTPUT);
+    pinMode(PIN_BTN1, INPUT);
+    pinMode(PIN_BTN2, INPUT);
+    pinMode(PIN_LDR_LEFT, INPUT);
+    pinMode(PIN_RAIN, INPUT);
+    pinMode(PIN_MQ135_DO, INPUT);
+    pinMode(PIN_BUZZER, OUTPUT);
+    digitalWrite(PIN_BUZZER, LOW);
 
-    // Clear shift register outputs
-    shiftOut2(0x00, 0x00);
-
+    // OLED — initialize first so we get visual feedback even if
+    // Wi-Fi/MQTT never connect.
     Wire.begin();
+    if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+        Serial.println("SSD1306 not found — check wiring");
+    }
+    oled.clearDisplay();
+    oled.setTextColor(SSD1306_WHITE);
+    oled.setTextSize(1);
+    oled.setCursor(0, 0);
+    oled.println("Smart Plant");
+    oled.println("Booting...");
+    oled.println("WiFi...");
+    oled.display();
 
-    // Wi-Fi
+    // Wi-Fi — scan first so we can see whether the target SSID is even
+    // visible (band/channel/range issue) vs. an auth problem.
+    WiFi.mode(WIFI_STA);
+    oled.println("Scanning...");
+    oled.display();
+    int netCount = WiFi.scanNetworks();
+    bool ssidFound = false;
+    int32_t rssi = 0;
+    int enc = -1;
+    int channel = -1;
+    for (int i = 0; i < netCount; i++) {
+        if (WiFi.SSID(i) == WIFI_SSID) {
+            ssidFound = true;
+            rssi    = WiFi.RSSI(i);
+            enc     = (int)WiFi.encryptionType(i);
+            channel = WiFi.channel(i);
+        }
+    }
+    oled.print("Nets: ");
+    oled.println(netCount);
+    oled.println(ssidFound ? "Target: YES" : "Target: NO");
+    if (ssidFound) {
+        oled.print("RSSI:"); oled.print(rssi);
+        oled.print(" Enc:"); oled.println(enc);
+        oled.print("Ch:"); oled.println(channel);
+    }
+    oled.display();
+    delay(3000);
+    oled.clearDisplay();
+    oled.setCursor(0, 0);
+    oled.println("MAC:");
+    oled.println(WiFi.macAddress());
+    oled.display();
+    delay(3000);
+    oled.clearDisplay();
+    oled.setCursor(0, 0);
+
+    // Wi-Fi — best-effort, 20s timeout (keeps going without it),
+    // showing the live wl_status_t code on screen while it tries.
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     Serial.print("WiFi connecting");
-    while (WiFi.status() != WL_CONNECTED) { Serial.print("."); delay(500); }
-    Serial.println(" OK — " + WiFi.localIP().toString());
+    unsigned long wifiStart = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 20000) {
+        Serial.print(".");
+        oled.clearDisplay();
+        oled.setCursor(0, 0);
+        oled.println("WiFi connecting");
+        oled.print("status=");
+        oled.println((int)WiFi.status());
+        oled.display();
+        delay(500);
+    }
+    bool wifiOk = WiFi.status() == WL_CONNECTED;
+    Serial.println(wifiOk ? (" OK — " + WiFi.localIP().toString()) : " timeout");
+    oled.println(wifiOk ? "WiFi: OK" : "WiFi: offline");
+    oled.display();
 
-    // MQTT
+    // MQTT — best-effort single attempt, retried later from loop()
     mqttClient.setServer(MQTT_HOST, MQTT_PORT);
     mqttClient.setCallback(onMessage);
-    connectMqtt();
+    bool mqttOk = wifiOk && connectMqtt();
+    lastMqttAttempt = millis();
+    oled.println(mqttOk ? "MQTT: OK" : "MQTT: offline");
+    oled.display();
 
     // NTP
-    ntp.begin();
-    ntp.update();
+    if (wifiOk) {
+        ntp.begin();
+        ntp.update();
+    }
 
     // Sensors
     dht.begin();
-    if (!bmp.begin()) Serial.println("BMP180 not found — check wiring");
 
-    // OLED
-    if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-        Serial.println("SSD1306 not found — check wiring");
-    } else {
-        oled.clearDisplay();
-        oled.setTextColor(SSD1306_WHITE);
-        oled.setTextSize(1);
-        oled.setCursor(0, 28);
-        oled.print("Smart Plant ready");
-        oled.display();
-    }
+    delay(1000);
+    oled.clearDisplay();
+    oled.setCursor(0, 28);
+    oled.print("Smart Plant ready");
+    oled.display();
+
+    // Reset the economy-mode timer now that the (lengthy, diagnostic-heavy)
+    // boot sequence is done, so the display stays on for a full
+    // ECONOMY_TIMEOUT_MS after setup finishes.
+    lastEventAt = millis();
 
     // Watchdog — restart if loop hangs for more than 8s
     ESP.wdtEnable(8000);
@@ -343,16 +398,52 @@ void loop() {
     if (WiFi.status() != WL_CONNECTED) {
         Serial.print("WiFi lost, reconnecting");
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+        oled.clearDisplay();
+        oled.setTextSize(1);
+        oled.setCursor(0, 0);
+        oled.println("WiFi reconnecting");
+        oled.print("status=");
+        oled.println((int)WiFi.status());
+        oled.display();
         delay(500);
         return;
     }
 
-    // Reconnect MQTT if dropped
-    if (!mqttClient.connected()) connectMqtt();
-    mqttClient.loop();
+    // Reconnect MQTT if dropped (retried every MQTT_RETRY_MS, non-blocking)
+    if (!mqttClient.connected()) {
+        if (now - lastMqttAttempt >= MQTT_RETRY_MS) {
+            lastMqttAttempt = now;
+            connectMqtt();
+        }
+    } else {
+        mqttClient.loop();
+    }
 
     // NTP sync (non-blocking; NTPClient internally throttles)
     ntp.update();
+
+    // Print raw sensor/pin states once a second so wiring can be checked
+    // without watching the OLED.
+    {
+        static unsigned long lastDebugAt = 0;
+        if (now - lastDebugAt >= 1000) {
+            lastDebugAt = now;
+            Serial.print("BTN1=");
+            Serial.print(digitalRead(PIN_BTN1));
+            Serial.print(" BTN2=");
+            Serial.print(digitalRead(PIN_BTN2));
+            Serial.print(" oledOn=");
+            Serial.print(oledOn);
+            Serial.print(" SOIL=");
+            Serial.print(analogRead(PIN_SOIL));
+            Serial.print(" LDR=");
+            Serial.print(digitalRead(PIN_LDR_LEFT));
+            Serial.print(" RAIN=");
+            Serial.print(digitalRead(PIN_RAIN));
+            Serial.print(" MQ135=");
+            Serial.println(digitalRead(PIN_MQ135_DO));
+        }
+    }
 
     // Buttons
     switch (buttonTick(btn1, digitalRead(PIN_BTN1) == HIGH, now)) {

@@ -1,28 +1,4 @@
-# Outputs — LEDs, OLED & Tamagotchi
-
-## RGB LED 1 — General status
-| Color | Meaning |
-|---|---|
-| Green | All parameters normal |
-| Yellow | 1 parameter in attention range |
-| Red | 1 or more parameters critical |
-
-## RGB LED 2 — Specific alerts
-| Color | Trigger |
-|---|---|
-| Blue | Rain detected |
-| Red | Critical temperature (> 38°C) |
-| Yellow | Dry soil (< 20%) |
-| Purple | Polluted air (> 700 ppm) |
-| Off | No active alerts |
-
-## 5-LED bar — Soil moisture
-- 0% → all off
-- 1–20% → 1 red LED
-- 21–40% → 2 yellow LEDs
-- 41–60% → 3 yellow LEDs
-- 61–80% → 4 green LEDs
-- 81–100% → 5 green LEDs
+# Outputs — OLED & Tamagotchi
 
 ## OLED display — modes
 

@@ -12,8 +12,7 @@ esp/
 │   ├── config.h          ← Wi-Fi credentials, broker IP, pins
 │   ├── sensors.h / .cpp  ← reads all sensors
 │   ├── mqtt.h / .cpp     ← MQTT connection and publishing
-│   ├── display.h / .cpp  ← OLED and Tamagotchi logic
-│   └── leds.h / .cpp     ← RGB LED and bar control
+│   └── display.h / .cpp  ← OLED and Tamagotchi logic
 └── test/
 ```
 
