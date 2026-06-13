@@ -10,6 +10,12 @@ const char* MQTT_HOST   = "192.168.1.100"; // backend's LAN IP
 const int   MQTT_PORT   = 1883;
 const char* MQTT_CLIENT = "smart-plant-esp";
 
+// ── OTA (wireless firmware update) ────────────────────────────────────────────
+// First flash must still be via USB. After that, update with:
+//   pio run -t upload --upload-port smart-plant.local --upload-flags="--auth=YOUR_OTA_PASSWORD"
+const char* OTA_HOSTNAME = "smart-plant";
+const char* OTA_PASSWORD = "YOUR_OTA_PASSWORD";
+
 // ── Timings ───────────────────────────────────────────────────────────────────
 const unsigned long READING_INTERVAL   = 5000;  // ms between sensor reads
 const unsigned long ECONOMY_TIMEOUT_MS = 30000; // ms of inactivity before display off

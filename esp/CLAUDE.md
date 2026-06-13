@@ -11,3 +11,4 @@ This file is an orientation guide. Detailed specs live in `docs/`:
 - [Inputs — buttons & soil sensor](docs/inputs.md)
 - [Outputs — OLED & Tamagotchi](docs/outputs.md)
 - [Implementation rules](docs/implementation-rules.md)
+- [OTA (wireless firmware update)](docs/ota.md)

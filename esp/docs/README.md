@@ -9,6 +9,7 @@ Living index of the ESP firmware's documentation. Updated at the end of every TD
 - [Inputs — buttons & soil sensor](inputs.md)
 - [Outputs — OLED & Tamagotchi](outputs.md)
 - [Implementation rules](implementation-rules.md)
+- [OTA (wireless firmware update)](ota.md)
 
 ## Testing approach
 

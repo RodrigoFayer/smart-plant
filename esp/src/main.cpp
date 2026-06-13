@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <ArduinoOTA.h>
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <Wire.h>
@@ -354,6 +355,22 @@ void setup() {
     oled.println(wifiOk ? "WiFi: OK" : "WiFi: offline");
     oled.display();
 
+    // OTA — wireless firmware updates (first flash must still be via USB)
+    ArduinoOTA.setHostname(OTA_HOSTNAME);
+    ArduinoOTA.setPassword(OTA_PASSWORD);
+    ArduinoOTA.onStart([]() {
+        ESP.wdtDisable();
+        oled.clearDisplay();
+        oled.setTextSize(1);
+        oled.setCursor(0, 28);
+        oled.print("OTA update...");
+        oled.display();
+    });
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        ESP.wdtFeed();
+    });
+    ArduinoOTA.begin();
+
     // MQTT — best-effort single attempt, retried later from loop()
     mqttClient.setServer(MQTT_HOST, MQTT_PORT);
     mqttClient.setCallback(onMessage);
@@ -393,6 +410,7 @@ void setup() {
 void loop() {
     unsigned long now = millis();
     ESP.wdtFeed();
+    ArduinoOTA.handle();
 
     // Reconnect Wi-Fi if dropped
     if (WiFi.status() != WL_CONNECTED) {
