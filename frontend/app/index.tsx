@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '../components/AlertBanner';
 import { MoistureBar } from '../components/MoistureBar';
@@ -68,7 +69,8 @@ export default function HomeScreen() {
   const lux = ldr ? Math.round((ldr.left + ldr.right) / 2) : undefined;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Smart Plant</Text>
         <View style={styles.headerActions}>
@@ -183,6 +185,7 @@ export default function HomeScreen() {
         {alerts.length === 0 ? <Text style={{ color: colors.textSecondary }}>No recent alerts</Text> : <AlertBanner alerts={alerts} />}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 

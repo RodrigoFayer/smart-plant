@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Spacing } from '../constants/theme';
 import { SensorStatus, STATUS_COLORS } from '../constants/thresholds';
 import { Alert } from '../store/plantStore';
+import { formatBrasiliaTime } from '../utils/formatTime';
 
 export interface AlertBannerProps {
   alerts: Alert[];
@@ -24,7 +25,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         >
           <Text style={styles.message}>{alert.message}</Text>
           <Text style={styles.time}>
-            {new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(alert.at))}
+            {formatBrasiliaTime(alert.at)}
           </Text>
         </View>
       ))}

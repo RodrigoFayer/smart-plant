@@ -3,6 +3,7 @@ import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 import { Colors, Spacing } from '../constants/theme';
 import { SensorStatus, STATUS_COLORS } from '../constants/thresholds';
+import { formatBrasiliaTime } from '../utils/formatTime';
 
 export interface SensorCardProps {
   title: string;
@@ -17,9 +18,7 @@ export function SensorCard({ title, value, unit, status, icon, updatedAt }: Sens
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
-  const updatedAtLabel = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(
-    new Date(updatedAt)
-  );
+  const updatedAtLabel = formatBrasiliaTime(updatedAt);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundElement }]}>

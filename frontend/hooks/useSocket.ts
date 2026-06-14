@@ -11,20 +11,33 @@ export function useSocket() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    console.log('[useSocket] connecting to', backendUrl);
     const socket = io(backendUrl);
 
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
+    socket.on('connect', () => {
+      console.log('[useSocket] connected', socket.id);
+      setConnected(true);
+    });
+    socket.on('disconnect', (reason) => {
+      console.log('[useSocket] disconnected', reason);
+      setConnected(false);
+    });
+    socket.on('connect_error', (err) => {
+      console.log('[useSocket] connect_error', err.message);
+    });
 
-    socket.on('sensor:update', ({ sensor, data }) => {
-      set((state) => ({ ...state, [sensor]: data }));
+    socket.on('sensor:update', ({ sensor, data, at }) => {
+      console.log('[useSocket] sensor:update', sensor, data);
+      set((state) => ({ ...state, [sensor]: { ...data, at } }));
     });
 
     socket.on('plant:state', (state) => {
+      console.log('[useSocket] plant:state', state);
       set((s) => ({ ...s, plant: state }));
     });
 
     socket.on('plant:alert', (alert) => {
+      console.log('[useSocket] plant:alert', alert);
       set((state) => ({
         ...state,
         alerts: [{ ...alert, at: Date.now() }, ...state.alerts].slice(0, 10),
@@ -36,6 +49,7 @@ export function useSocket() {
     });
 
     socket.on('watering:logged', (watering) => {
+      console.log('[useSocket] watering:logged', watering);
       set((state) => ({ ...state, lastWatering: watering }));
     });
 

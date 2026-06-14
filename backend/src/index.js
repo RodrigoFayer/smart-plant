@@ -25,13 +25,14 @@ createSocketServer(httpServer, store)
 await startBroker(PORT_MQTT, { store, db })
 
 // MockSensorSource feeds the store directly until the real ESP is connected.
-// Swap for MqttSensorSource when the ESP firmware is ready.
-const source = new MockSensorSource({ interval: 5000 })
-source.on('reading', ({ sensor, data }) => {
-  store.ingest({ sensor, data })
-  db.insertReading({ sensor, data, at: Date.now() })
-})
-source.start()
+// Disabled while testing with the real ESP over MQTT (avoids mixing fake
+// readings with real ones). Swap for MqttSensorSource when ready.
+// const source = new MockSensorSource({ interval: 5000 })
+// source.on('reading', ({ sensor, data }) => {
+//   store.ingest({ sensor, data })
+//   db.insertReading({ sensor, data, at: Date.now() })
+// })
+// source.start()
 
 httpServer.listen(PORT_HTTP, () => {
   console.log(`HTTP  → http://localhost:${PORT_HTTP}`)
