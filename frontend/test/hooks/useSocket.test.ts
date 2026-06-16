@@ -75,7 +75,7 @@ describe('useSocket', () => {
     await renderHook(() => useSocket());
 
     await act(() => {
-      handlers['sensor:update']({ sensor: 'dht11', data: { temp: 24, humidity: 62, at: 1720000000 } });
+      handlers['sensor:update']({ sensor: 'dht11', data: { temp: 24, humidity: 62 }, at: 1720000000 });
     });
 
     expect(usePlantStore.getState().dht11).toEqual({ temp: 24, humidity: 62, at: 1720000000 });

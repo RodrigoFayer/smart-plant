@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 import { AlertBanner } from '../../components/AlertBanner';
 import { STATUS_COLORS } from '../../constants/thresholds';
 import type { Alert } from '../../store/plantStore';
+import { formatBrasiliaTime } from '../../utils/formatTime';
 
 describe('AlertBanner', () => {
   it('renders nothing when there are no alerts', async () => {
@@ -29,9 +30,7 @@ describe('AlertBanner', () => {
 
     const { getByText } = await render(<AlertBanner alerts={alerts} />);
 
-    const expected = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(
-      new Date(alerts[0].at)
-    );
+    const expected = formatBrasiliaTime(alerts[0].at);
     expect(getByText(expected)).toBeTruthy();
   });
 
