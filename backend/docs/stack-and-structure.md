@@ -35,7 +35,6 @@ backend/
 │   │   └── sensorSource.js ← generates mocked readings (swappable for the real ESP)
 │   ├── handlers/
 │   │   ├── dht11.js      ← processes plant/sensors/dht11
-│   │   ├── bmp180.js
 │   │   ├── mq135.js
 │   │   ├── rain.js
 │   │   ├── ldr.js

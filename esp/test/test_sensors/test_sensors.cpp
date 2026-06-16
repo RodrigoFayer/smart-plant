@@ -4,6 +4,63 @@
 void setUp() {}
 void tearDown() {}
 
+// ─── adsToRaw10 ───────────────────────────────────────────────────────────────
+// Normalises an ADS1115 single-ended count (0..32767) to the shared 0..1023 domain.
+
+void test_ads_zero_counts_is_raw0() {
+    TEST_ASSERT_EQUAL(0, adsToRaw10(0));
+}
+
+void test_ads_full_scale_is_raw1023() {
+    TEST_ASSERT_EQUAL(1023, adsToRaw10(ADS_FULL_SCALE));
+}
+
+void test_ads_midpoint_scales_proportionally() {
+    // 16384 / 32767 * 1023 ≈ 511 (integer-truncated)
+    TEST_ASSERT_EQUAL(511, adsToRaw10(16384));
+}
+
+void test_ads_negative_counts_clamp_to_zero() {
+    // single-ended reads shouldn't go negative, but noise could — clamp
+    TEST_ASSERT_EQUAL(0, adsToRaw10(-100));
+}
+
+// ─── ldrLux ───────────────────────────────────────────────────────────────────
+// Inverted: high reading = dark (low lux), low reading = bright (high lux).
+
+void test_ldr_dark_reading_is_zero_lux() {
+    TEST_ASSERT_EQUAL(0, ldrLux(1023));
+}
+
+void test_ldr_bright_reading_is_max_lux() {
+    TEST_ASSERT_EQUAL(1000, ldrLux(0));
+}
+
+void test_ldr_clamps_out_of_range() {
+    TEST_ASSERT_EQUAL(0, ldrLux(1100));
+    TEST_ASSERT_EQUAL(1000, ldrLux(-5));
+}
+
+// ─── mq135Ppm ─────────────────────────────────────────────────────────────────
+// Simple linear scale 0..1023 → 0..MQ135_PPM_MAX.
+
+void test_mq135_clean_air_is_zero_ppm() {
+    TEST_ASSERT_EQUAL(0, mq135Ppm(0));
+}
+
+void test_mq135_full_reading_is_max_ppm() {
+    TEST_ASSERT_EQUAL(MQ135_PPM_MAX, mq135Ppm(1023));
+}
+
+void test_mq135_high_reading_crosses_polluted_threshold() {
+    // backend flags ppm > 700 as "polluted air" — a reading above ~358 raw must exceed it
+    TEST_ASSERT_GREATER_THAN(700, mq135Ppm(512));
+}
+
+void test_mq135_clamps_above_range() {
+    TEST_ASSERT_EQUAL(MQ135_PPM_MAX, mq135Ppm(1100));
+}
+
 // ─── soilMoisturePercent ──────────────────────────────────────────────────────
 // HL-69: dry soil = high ADC (1023), wet soil = low ADC (0).
 // Formula: map(raw, 1023, 0, 0, 100) then constrain(0, 100).
@@ -82,6 +139,20 @@ void test_mq135_handles_millis_rollover() {
 
 int main() {
     UNITY_BEGIN();
+
+    RUN_TEST(test_ads_zero_counts_is_raw0);
+    RUN_TEST(test_ads_full_scale_is_raw1023);
+    RUN_TEST(test_ads_midpoint_scales_proportionally);
+    RUN_TEST(test_ads_negative_counts_clamp_to_zero);
+
+    RUN_TEST(test_ldr_dark_reading_is_zero_lux);
+    RUN_TEST(test_ldr_bright_reading_is_max_lux);
+    RUN_TEST(test_ldr_clamps_out_of_range);
+
+    RUN_TEST(test_mq135_clean_air_is_zero_ppm);
+    RUN_TEST(test_mq135_full_reading_is_max_ppm);
+    RUN_TEST(test_mq135_high_reading_crosses_polluted_threshold);
+    RUN_TEST(test_mq135_clamps_above_range);
 
     RUN_TEST(test_soil_raw_0_is_100_percent);
     RUN_TEST(test_soil_raw_1023_is_0_percent);

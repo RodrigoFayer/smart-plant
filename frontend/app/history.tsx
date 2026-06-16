@@ -20,10 +20,8 @@ export const METRICS: MetricOption[] = [
   { key: 'temp', label: 'Temperature', sensor: 'dht11', dataKey: 'temp', unit: '°C', thresholdKey: 'temp' },
   { key: 'humidity', label: 'Air Humidity', sensor: 'dht11', dataKey: 'humidity', unit: '%', thresholdKey: 'airHumidity' },
   { key: 'soilMoisture', label: 'Soil Moisture', sensor: 'soil', dataKey: 'moisture', unit: '%', thresholdKey: 'soilMoisture' },
-  { key: 'lightLeft', label: 'Light (Left)', sensor: 'ldr', dataKey: 'left', unit: 'lux', thresholdKey: 'lux' },
-  { key: 'lightRight', label: 'Light (Right)', sensor: 'ldr', dataKey: 'right', unit: 'lux', thresholdKey: 'lux' },
+  { key: 'light', label: 'Light', sensor: 'ldr', dataKey: 'lux', unit: 'lux', thresholdKey: 'lux' },
   { key: 'ppm', label: 'Air Quality', sensor: 'mq135', dataKey: 'ppm', unit: 'ppm', thresholdKey: 'ppm' },
-  { key: 'pressure', label: 'Pressure', sensor: 'bmp180', dataKey: 'pressure', unit: 'hPa' },
 ];
 
 export const PERIODS: HistoryPeriod[] = ['1h', '24h', '7d', '30d'];

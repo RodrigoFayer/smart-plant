@@ -72,7 +72,7 @@ test('getState() stays null until temp, soilMoisture, lux and ppm have all repor
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
   assert.equal(store.getState(), null)
 
-  store.ingest({ sensor: 'ldr', data: { left: 680, right: 540 } })
+  store.ingest({ sensor: 'ldr', data: { lux: 610 } })
   assert.notEqual(store.getState(), null)
 })
 
@@ -82,7 +82,7 @@ test('getState() reflects calculatePlantState over the derived snapshot once com
   store.ingest({ sensor: 'soil', data: { moisture: 65 } })
   store.ingest({ sensor: 'dht11', data: { temp: 24, humidity: 62 } })
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
-  store.ingest({ sensor: 'ldr', data: { left: 200, right: 200 } })
+  store.ingest({ sensor: 'ldr', data: { lux: 200 } })
 
   assert.deepEqual(store.getState(), { state: 'happy', reason: null, color: 'green' })
 })
@@ -92,27 +92,25 @@ test('getState() recomputes from the latest reading of each sensor as new data a
   store.ingest({ sensor: 'soil', data: { moisture: 65 } })
   store.ingest({ sensor: 'dht11', data: { temp: 24, humidity: 62 } })
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
-  store.ingest({ sensor: 'ldr', data: { left: 200, right: 200 } })
+  store.ingest({ sensor: 'ldr', data: { lux: 200 } })
   assert.equal(store.getState().state, 'happy')
 
   store.ingest({ sensor: 'soil', data: { moisture: 15 } })
   assert.equal(store.getState().state, 'thirsty')
 })
 
-test('derives lux from the ldr raw readings by inverting and scaling their average', () => {
+test('uses the lux value from the ESP directly in the snapshot', () => {
   const store = new PlantStore()
   store.ingest({ sensor: 'soil', data: { moisture: 65 } })
   store.ingest({ sensor: 'dht11', data: { temp: 24, humidity: 62 } })
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
 
-  // avg(680, 540) = 610 → ((1023 - 610) / 1023) * 1000 ≈ 403.7 → 404
-  store.ingest({ sensor: 'ldr', data: { left: 680, right: 540 } })
-
-  // lux 404 keeps the plant out of "noLight" (< 100), all else nominal → happy
+  // 400 lux keeps the plant out of "noLight" (< 100), all else nominal → happy
+  store.ingest({ sensor: 'ldr', data: { lux: 400 } })
   assert.deepEqual(store.getState(), { state: 'happy', reason: null, color: 'green' })
 
-  // pitch dark: avg(1023, 1023) = 1023 → lux = 0 → "noLight"
-  store.ingest({ sensor: 'ldr', data: { left: 1023, right: 1023 } })
+  // pitch dark: 0 lux → "noLight"
+  store.ingest({ sensor: 'ldr', data: { lux: 0 } })
   assert.equal(store.getState().state, 'noLight')
 })
 
@@ -124,7 +122,7 @@ test('emits a "state" event with the new state whenever the computed state chang
   store.ingest({ sensor: 'soil', data: { moisture: 65 } })
   store.ingest({ sensor: 'dht11', data: { temp: 24, humidity: 62 } })
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
-  store.ingest({ sensor: 'ldr', data: { left: 200, right: 200 } })
+  store.ingest({ sensor: 'ldr', data: { lux: 200 } })
 
   assert.equal(states.length, 1)
   assert.deepEqual(states[0], { state: 'happy', reason: null, color: 'green' })
@@ -143,7 +141,7 @@ test('does not emit a "state" event when the recomputed state is unchanged', () 
   store.ingest({ sensor: 'soil', data: { moisture: 65 } })
   store.ingest({ sensor: 'dht11', data: { temp: 24, humidity: 62 } })
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
-  store.ingest({ sensor: 'ldr', data: { left: 200, right: 200 } })
+  store.ingest({ sensor: 'ldr', data: { lux: 200 } })
   assert.equal(states.length, 1)
 
   // another soil reading, still well within the "happy" range — same state, same reason
@@ -160,7 +158,7 @@ test('emits a "state" event when the reason changes even if the state name stays
   store.ingest({ sensor: 'soil', data: { moisture: 15 } })
   store.ingest({ sensor: 'dht11', data: { temp: 39, humidity: 62 } })
   store.ingest({ sensor: 'mq135', data: { ppm: 320 } })
-  store.ingest({ sensor: 'ldr', data: { left: 200, right: 200 } })
+  store.ingest({ sensor: 'ldr', data: { lux: 200 } })
   assert.deepEqual(states.at(-1), {
     state: 'sick',
     reason: 'dry soil, critical temperature',

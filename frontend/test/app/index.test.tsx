@@ -178,8 +178,8 @@ describe('HomeScreen', () => {
     expect(getByTestId('moisture-bar').props.children).toBe(65);
   });
 
-  it('shows the average light level from the ldr reading', async () => {
-    usePlantStore.setState({ ldr: { left: 680, right: 540, at: 1720000000000 } });
+  it('shows the light level from the ldr reading', async () => {
+    usePlantStore.setState({ ldr: { lux: 610, at: 1720000000000 } });
 
     const { getByTestId } = await render(<HomeScreen />);
 
@@ -198,13 +198,6 @@ describe('HomeScreen', () => {
     );
   });
 
-  it('shows the atmospheric pressure from bmp180', async () => {
-    usePlantStore.setState({ bmp180: { pressure: 1013, at: 1720000000000 } });
-
-    const { getByTestId } = await render(<HomeScreen />);
-
-    expect(sensorCardProps(getByTestId, 'Pressure')).toEqual(expect.objectContaining({ value: 1013, unit: 'hPa' }));
-  });
 
   it.each([
     [true, 'Yes'],

@@ -11,9 +11,8 @@ Returns the latest value of each sensor and the plant's current state.
   "sensors": {
     "dht11":  { "temp": 24, "humidity": 62, "at": 1720000000 },
     "soil":   { "moisture": 65, "at": 1720000000 },
-    "ldr":    { "left": 680, "right": 540, "at": 1720000000 },
+    "ldr":    { "lux": 610, "at": 1720000000 },
     "mq135":  { "ppm": 320, "at": 1720000000 },
-    "bmp180": { "pressure": 1013, "at": 1720000000 },
     "rain":   { "detected": false, "at": 1720000000 }
   },
   "lastWatering": { "origin": "manual_btn", "at": 1719900000 }

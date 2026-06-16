@@ -11,11 +11,11 @@ void buildTopic(char* buf, size_t size, const char* sensor);
 void buildPayloadDht11  (char* buf, size_t size, int temp, int humidity);
 void buildPayloadMq135  (char* buf, size_t size, int ppm);
 void buildPayloadRain   (char* buf, size_t size, bool detected);
-void buildPayloadLdr    (char* buf, size_t size, int left, int right);
+void buildPayloadLdr    (char* buf, size_t size, int lux);
 void buildPayloadSoil   (char* buf, size_t size, int moisture);
 
 // Builds a plant/commands payload.
-// Pass timestamp = 0 to omit the field (e.g. for "mute").
+// Pass timestamp = 0 to omit the timestamp field.
 void buildPayloadCommand(char* buf, size_t size, const char* action, unsigned long timestamp);
 
 #endif

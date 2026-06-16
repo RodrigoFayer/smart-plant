@@ -11,7 +11,6 @@ Vertical scroll layout:
    - Soil moisture (visual bar)
    - Light level (sun icon with intensity)
    - Air quality (ppm with colored badge)
-   - Atmospheric pressure (BMP180)
    - Rain (icon with status)
 4. **Last watering**: "2 days ago — manual" with a "Log watering now" button
 5. **Recent alerts**: list of recent alerts with timestamps

@@ -1,7 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { parseDht11 } from '../../src/handlers/dht11.js'
-import { parseBmp180 } from '../../src/handlers/bmp180.js'
 import { parseMq135 } from '../../src/handlers/mq135.js'
 import { parseRain } from '../../src/handlers/rain.js'
 import { parseLdr } from '../../src/handlers/ldr.js'
@@ -27,20 +26,6 @@ const CASES = [
       'not an object',
       42,
       [24, 62],
-    ],
-  },
-  {
-    sensor: 'bmp180',
-    parse: parseBmp180,
-    valid: { pressure: 1013, altitude: 0 },
-    withExtras: { pressure: 1013, altitude: 0, unit: 'hPa' },
-    invalid: [
-      {},
-      { pressure: 1013 },
-      { altitude: 0 },
-      { pressure: '1013', altitude: 0 },
-      { pressure: 1013, altitude: '0' },
-      null,
     ],
   },
   {
@@ -71,14 +56,12 @@ const CASES = [
   {
     sensor: 'ldr',
     parse: parseLdr,
-    valid: { left: 680, right: 540 },
-    withExtras: { left: 680, right: 540, unit: 'raw' },
+    valid: { lux: 610 },
+    withExtras: { lux: 610, unit: 'lux' },
     invalid: [
       {},
-      { left: 680 },
-      { right: 540 },
-      { left: '680', right: 540 },
-      { left: 680, right: '540' },
+      { lux: '610' },
+      { left: 680, right: 540 },
       null,
     ],
   },

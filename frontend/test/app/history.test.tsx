@@ -77,12 +77,4 @@ describe('HistoryScreen', () => {
     );
   });
 
-  it('omits threshold lines for metrics without thresholds', async () => {
-    const pressure = METRICS.find((m) => m.key === 'pressure')!;
-
-    const { getByTestId } = await render(<HistoryScreen />);
-    await fireEvent.press(getByTestId(`metric-option-${pressure.key}`));
-
-    expect(chartProps(getByTestId).thresholdLines).toBeUndefined();
-  });
 });

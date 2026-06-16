@@ -9,7 +9,7 @@ interface SensorSource {
 
 note right of SensorSource
   emits 'reading' => { sensor, data }
-  sensor: dht11 | bmp180 | mq135 | rain | ldr | soil
+  sensor: dht11 | mq135 | rain | ldr | soil
   data: matches the documented MQTT payload shape
 end note
 

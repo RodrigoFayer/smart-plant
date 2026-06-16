@@ -79,14 +79,13 @@ test('skips store.ingest and db.insertReading when sensor validation fails', () 
   assert.equal(db.calls.length, 0)
 })
 
-test('routes all six documented sensor topics to store.ingest', () => {
+test('routes all five documented sensor topics to store.ingest', () => {
   const cases = [
-    ['plant/sensors/dht11',  { temp: 24, humidity: 62 },      'dht11'],
-    ['plant/sensors/bmp180', { pressure: 1013, altitude: 0 }, 'bmp180'],
-    ['plant/sensors/mq135',  { ppm: 320 },                    'mq135'],
-    ['plant/sensors/rain',   { detected: true },              'rain'],
-    ['plant/sensors/ldr',    { left: 680, right: 540 },       'ldr'],
-    ['plant/sensors/soil',   { moisture: 45 },                'soil'],
+    ['plant/sensors/dht11',  { temp: 24, humidity: 62 }, 'dht11'],
+    ['plant/sensors/mq135',  { ppm: 320 },               'mq135'],
+    ['plant/sensors/rain',   { detected: true },         'rain'],
+    ['plant/sensors/ldr',    { lux: 610 },               'ldr'],
+    ['plant/sensors/soil',   { moisture: 45 },           'soil'],
   ]
 
   for (const [topic, payload, sensor] of cases) {

@@ -6,9 +6,8 @@
 interface SensorsState {
   dht11:  { temp: number; humidity: number; at: number } | null
   soil:   { moisture: number; at: number } | null
-  ldr:    { left: number; right: number; at: number } | null
+  ldr:    { lux: number; at: number } | null
   mq135:  { ppm: number; at: number } | null
-  bmp180: { pressure: number; at: number } | null
   rain:   { detected: boolean; at: number } | null
   plant:  { state: PlantState; reason: string | null; color: string } | null
   lastWatering: { origin: string; at: number } | null

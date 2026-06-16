@@ -11,9 +11,8 @@ export interface StatusResponse {
   sensors: Partial<{
     dht11: { temp: number; humidity: number; at: number };
     soil: { moisture: number; at: number };
-    ldr: { left: number; right: number; at: number };
+    ldr: { lux: number; at: number };
     mq135: { ppm: number; at: number };
-    bmp180: { pressure: number; at: number };
     rain: { detected: boolean; at: number };
   }>;
   lastWatering: { origin: string; at: number } | null;

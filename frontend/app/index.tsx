@@ -59,14 +59,13 @@ export default function HomeScreen() {
   const soil = usePlantStore((s) => s.soil);
   const ldr = usePlantStore((s) => s.ldr);
   const mq135 = usePlantStore((s) => s.mq135);
-  const bmp180 = usePlantStore((s) => s.bmp180);
   const rain = usePlantStore((s) => s.rain);
   const plant = usePlantStore((s) => s.plant);
   const lastWatering = usePlantStore((s) => s.lastWatering);
   const alerts = usePlantStore((s) => s.alerts);
 
   const plantState: PlantState = plant?.state ?? 'happy';
-  const lux = ldr ? Math.round((ldr.left + ldr.right) / 2) : undefined;
+  const lux = ldr ? ldr.lux : undefined;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
@@ -140,16 +139,6 @@ export default function HomeScreen() {
             status={statusFor('ppm', mq135?.ppm)}
             icon="cloud-outline"
             updatedAt={mq135?.at ?? 0}
-          />
-        </View>
-        <View style={styles.gridItem}>
-          <SensorCard
-            title="Pressure"
-            value={bmp180?.pressure ?? '--'}
-            unit="hPa"
-            status="ok"
-            icon="speedometer-outline"
-            updatedAt={bmp180?.at ?? 0}
           />
         </View>
         <View style={styles.gridItem}>

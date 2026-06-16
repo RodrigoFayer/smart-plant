@@ -5,6 +5,7 @@
 #include <DHT.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_ADS1X15.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
@@ -26,6 +27,7 @@ static WiFiClient            wifiClient;
 static PubSubClient          mqttClient(wifiClient);
 static DHT                   dht(PIN_DHT11, DHT11);
 static Adafruit_SSD1306      oled(128, 64, &Wire, -1);
+static Adafruit_ADS1115      ads;
 static WiFiUDP               ntpUDP;
 static NTPClient             ntp(ntpUDP, "pool.ntp.org", -10800, 60000); // UTC-3 (Brasília)
 
@@ -35,7 +37,6 @@ static ButtonState btn1 = {};
 static ButtonState btn2 = {};
 
 static char  plantState[16]  = "happy";
-static bool  buzzerMuted     = false;
 static bool  oledOn          = true;
 
 static unsigned long bootTime       = 0;
@@ -158,12 +159,8 @@ static void onMessage(char* topic, byte* payload, unsigned int len) {
         lastEventAt = millis();
 
     } else if (strcmp(topic, "plant/alerts") == 0) {
-        if (!buzzerMuted) tone(PIN_BUZZER, 1000, 300);
+        // No buzzer installed — an alert just wakes the display.
         lastEventAt = millis();
-
-    } else if (strcmp(topic, "plant/commands") == 0) {
-        const char* action = doc["action"] | "";
-        if (strcmp(action, "mute") == 0) buzzerMuted = true;
     }
 }
 
@@ -200,8 +197,8 @@ static void readAndPublish() {
         lastHum  = (int)humidity;
     }
 
-    // Soil moisture (HL-69)
-    int soilRaw  = analogRead(PIN_SOIL);
+    // Soil moisture (HL-69) — analog via ADS1115
+    int soilRaw  = adsToRaw10(ads.readADC_SingleEnded(ADS_CH_SOIL));
     int moisture = soilMoisturePercent(soilRaw);
     buildTopic(topic, sizeof(topic), "soil");
     buildPayloadSoil(payload, sizeof(payload), moisture);
@@ -209,12 +206,12 @@ static void readAndPublish() {
     lastSoil    = moisture;
     lastSoilRaw = soilRaw;
 
-    // LDR — light level (left only for now; digital threshold via voltage divider)
-    int ldrLeft = digitalRead(PIN_LDR_LEFT);
+    // LDR — single light sensor on the ADS1115 (real lux, 0–1000).
+    int lux = ldrLux(adsToRaw10(ads.readADC_SingleEnded(ADS_CH_LDR)));
     buildTopic(topic, sizeof(topic), "ldr");
-    buildPayloadLdr(payload, sizeof(payload), ldrLeft, 0);
+    buildPayloadLdr(payload, sizeof(payload), lux);
     mqttClient.publish(topic, payload);
-    lastLux = ldrLeft ? 1000 : 0;
+    lastLux = lux;
 
     // Rain sensor (LOW = rain detected on most modules)
     bool rain = digitalRead(PIN_RAIN) == LOW;
@@ -222,11 +219,9 @@ static void readAndPublish() {
     buildPayloadRain(payload, sizeof(payload), rain);
     mqttClient.publish(topic, payload);
 
-    // MQ135 — air quality (digital threshold for now), only after warm-up
-    int ppm = 0;
+    // MQ135 — air quality, real ppm via ADS1115, only after warm-up
     if (isMq135Ready(now, bootTime)) {
-        bool badAir = digitalRead(PIN_MQ135_DO) == LOW;
-        ppm = badAir ? 1023 : 0;
+        int ppm = mq135Ppm(adsToRaw10(ads.readADC_SingleEnded(ADS_CH_MQ135)));
         buildTopic(topic, sizeof(topic), "mq135");
         buildPayloadMq135(payload, sizeof(payload), ppm);
         mqttClient.publish(topic, payload);
@@ -246,15 +241,6 @@ static void handleBtn1Short() {
         oled.dim(false);
         oledOn = true;
     }
-}
-
-static void handleBtn1Long() {
-    buzzerMuted = true;
-    char topic[48], payload[64];
-    buildTopic(topic, sizeof(topic), "commands");
-    buildPayloadCommand(payload, sizeof(payload), "mute", 0);
-    mqttClient.publish(topic, payload);
-    Serial.println("Buzzer muted");
 }
 
 static void handleBtn2Short() {
@@ -277,17 +263,16 @@ void setup() {
     // Pin modes
     pinMode(PIN_BTN1, INPUT);
     pinMode(PIN_BTN2, INPUT);
-    pinMode(PIN_LDR_LEFT, INPUT);
     pinMode(PIN_RAIN, INPUT);
-    pinMode(PIN_MQ135_DO, INPUT);
-    pinMode(PIN_BUZZER, OUTPUT);
-    digitalWrite(PIN_BUZZER, LOW);
 
     // OLED — initialize first so we get visual feedback even if
     // Wi-Fi/MQTT never connect.
     Wire.begin();
     if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
         Serial.println("SSD1306 not found — check wiring");
+    }
+    if (!ads.begin(ADS_ADDR)) {
+        Serial.println("ADS1115 not found — check wiring");
     }
     oled.clearDisplay();
     oled.setTextColor(SSD1306_WHITE);
@@ -298,42 +283,7 @@ void setup() {
     oled.println("WiFi...");
     oled.display();
 
-    // Wi-Fi — scan first so we can see whether the target SSID is even
-    // visible (band/channel/range issue) vs. an auth problem.
     WiFi.mode(WIFI_STA);
-    oled.println("Scanning...");
-    oled.display();
-    int netCount = WiFi.scanNetworks();
-    bool ssidFound = false;
-    int32_t rssi = 0;
-    int enc = -1;
-    int channel = -1;
-    for (int i = 0; i < netCount; i++) {
-        if (WiFi.SSID(i) == WIFI_SSID) {
-            ssidFound = true;
-            rssi    = WiFi.RSSI(i);
-            enc     = (int)WiFi.encryptionType(i);
-            channel = WiFi.channel(i);
-        }
-    }
-    oled.print("Nets: ");
-    oled.println(netCount);
-    oled.println(ssidFound ? "Target: YES" : "Target: NO");
-    if (ssidFound) {
-        oled.print("RSSI:"); oled.print(rssi);
-        oled.print(" Enc:"); oled.println(enc);
-        oled.print("Ch:"); oled.println(channel);
-    }
-    oled.display();
-    delay(3000);
-    oled.clearDisplay();
-    oled.setCursor(0, 0);
-    oled.println("MAC:");
-    oled.println(WiFi.macAddress());
-    oled.display();
-    delay(3000);
-    oled.clearDisplay();
-    oled.setCursor(0, 0);
 
     // Wi-Fi — best-effort, 20s timeout (keeps going without it),
     // showing the live wl_status_t code on screen while it tries.
@@ -453,21 +403,19 @@ void loop() {
             Serial.print(" oledOn=");
             Serial.print(oledOn);
             Serial.print(" SOIL=");
-            Serial.print(analogRead(PIN_SOIL));
+            Serial.print(ads.readADC_SingleEnded(ADS_CH_SOIL));
             Serial.print(" LDR=");
-            Serial.print(digitalRead(PIN_LDR_LEFT));
+            Serial.print(ads.readADC_SingleEnded(ADS_CH_LDR));
             Serial.print(" RAIN=");
             Serial.print(digitalRead(PIN_RAIN));
             Serial.print(" MQ135=");
-            Serial.println(digitalRead(PIN_MQ135_DO));
+            Serial.println(ads.readADC_SingleEnded(ADS_CH_MQ135));
         }
     }
 
-    // Buttons
-    switch (buttonTick(btn1, digitalRead(PIN_BTN1) == HIGH, now)) {
-        case BTN_SHORT_PRESS: handleBtn1Short(); break;
-        case BTN_LONG_PRESS:  handleBtn1Long();  break;
-        default: break;
+    // Buttons — BTN1 wakes/refreshes the display; BTN2 logs manual watering.
+    if (buttonTick(btn1, digitalRead(PIN_BTN1) == HIGH, now) == BTN_SHORT_PRESS) {
+        handleBtn1Short();
     }
     if (buttonTick(btn2, digitalRead(PIN_BTN2) == HIGH, now) == BTN_SHORT_PRESS) {
         handleBtn2Short();

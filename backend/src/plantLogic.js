@@ -1,4 +1,4 @@
-// readings = { temp, airHumidity, soilMoisture, lux, ppm, rain, pressure }
+// readings = { temp, airHumidity, soilMoisture, lux, ppm, rain }
 // returns  = { state, reason, color }
 
 export function calculatePlantState(readings) {

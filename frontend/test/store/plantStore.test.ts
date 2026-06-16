@@ -14,7 +14,6 @@ describe('plantStore', () => {
     expect(state.soil).toBeNull();
     expect(state.ldr).toBeNull();
     expect(state.mq135).toBeNull();
-    expect(state.bmp180).toBeNull();
     expect(state.rain).toBeNull();
     expect(state.plant).toBeNull();
     expect(state.lastWatering).toBeNull();
