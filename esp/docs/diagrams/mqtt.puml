@@ -7,7 +7,7 @@ participant "mqtt.h" as Mqtt
 participant "PubSubClient" as Client
 participant "Aedes broker\n(backend)" as Broker
 
-Main -> Sensors: soilMoisturePercent(analogRead(A0))
+Main -> Sensors: soilMoisturePercent(adsToRaw10(\nads.readADC_SingleEnded(A0)))
 Sensors --> Main: moisture %
 
 Main -> Mqtt: buildTopic(buf, size, "soil")

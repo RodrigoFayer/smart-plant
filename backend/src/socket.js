@@ -1,6 +1,6 @@
 import { Server } from 'socket.io'
 
-export function createSocketServer(httpServer, store) {
+export function createSocketServer(httpServer, store, db) {
   const io = new Server(httpServer, { cors: { origin: '*' } })
 
   io.on('connection', (socket) => {
@@ -10,6 +10,9 @@ export function createSocketServer(httpServer, store) {
 
     const state = store.getState()
     if (state) socket.emit('plant:state', state)
+
+    const lastWatering = db?.getLatestWatering()
+    if (lastWatering) socket.emit('watering:logged', lastWatering)
   })
 
   store.on('reading', ({ sensor, data, at }) => {
@@ -18,6 +21,11 @@ export function createSocketServer(httpServer, store) {
 
   store.on('state', ({ state, reason, color }) => {
     io.emit('plant:state', { state, reason, color })
+  })
+
+  // Manual watering logged via the MQTT broker (ESP BTN2) → push to the app.
+  store.on('watering', (watering) => {
+    io.emit('watering:logged', watering)
   })
 
   return io

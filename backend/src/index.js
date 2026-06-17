@@ -20,7 +20,7 @@ store.on('state', ({ state, reason }) => {
 
 const app = createApp({ store, db })
 const httpServer = createServer(app)
-createSocketServer(httpServer, store)
+createSocketServer(httpServer, store, db)
 
 await startBroker(PORT_MQTT, { store, db })
 
