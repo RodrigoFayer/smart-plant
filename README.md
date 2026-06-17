@@ -20,18 +20,18 @@ Each directory has its own `CLAUDE.md` and `docs/` folder with specific details.
 | Component | Qty | Use |
 |---|---|---|
 | NodeMCU ESP12 Amica | 1 | Main microcontroller |
+| ADS1115 (16-bit I2C ADC, 4 channels) | 1 | Analog reads for soil, MQ135 and the LDR |
 | 0.96" I2C OLED display (SSD1306) | 1 | Tamagotchi + readings |
 | DHT11 | 1 | Air temperature and humidity |
-| BMP180 | 1 | Atmospheric pressure (I2C) |
-| MQ135 | 1 | Air quality (ppm) |
-| Rain sensor | 1 | Precipitation detection |
-| LDR | 2 | Light level (left and right) |
-| HL-69 soil moisture sensor | 1 | Soil moisture (AO + DO) |
-| 10k potentiometer | 1 | Fine adjustment / general use |
-| Active buzzer | 1 | Sound alerts |
-| RGB LED | 2 | General status and alerts |
-| Assorted color LEDs | 15 | Soil moisture level bar |
-| Push button | 2 | BTN1: mode/mute — BTN2: manual watering |
+| MQ135 | 1 | Air quality (ppm) — analog via ADS1115 |
+| Rain sensor | 1 | Precipitation detection (digital) |
+| LDR | 1 | Light level — analog (lux) via ADS1115 (channel A3) |
+| HL-69 soil moisture sensor | 1 | Soil moisture — analog via ADS1115 |
+| Push button | 2 | BTN1: wake/mode — BTN2: manual watering |
+
+> The ESP8266 has a single native ADC (A0), so the three analog sensors share an external
+> ADS1115 on the I2C bus (alongside the OLED). See [esp/docs/wiring.md](esp/docs/wiring.md)
+> for the full pinout and breadboard layout.
 
 ## Data flow
 
@@ -49,13 +49,12 @@ ESP12
 | Topic | Direction | Payload |
 |---|---|---|
 | `plant/sensors/dht11` | ESP → Backend | `{"temp": 24, "humidity": 62}` |
-| `plant/sensors/bmp180` | ESP → Backend | `{"pressure": 1013, "altitude": 0}` |
-| `plant/sensors/mq135` | ESP → Backend | `{"ppm": 320}` |
+| `plant/sensors/mq135` | ESP → Backend | `{"ppm": 320}` (real ppm, ADS1115) |
 | `plant/sensors/rain` | ESP → Backend | `{"detected": true}` |
-| `plant/sensors/ldr` | ESP → Backend | `{"left": 680, "right": 540}` |
+| `plant/sensors/ldr` | ESP → Backend | `{"lux": 610}` (single light sensor, lux 0–1000) |
 | `plant/sensors/soil` | ESP → Backend | `{"moisture": 45}` |
 | `plant/alerts` | Backend → ESP | `{"type": "critical", "msg": "Soil too dry!"}` |
-| `plant/commands` | App → ESP | `{"action": "mute"}` |
+| `plant/commands` | ESP → Backend | `{"action": "manual_watering", "timestamp": 1719900000}` |
 
 ## Plant health logic (Tamagotchi)
 

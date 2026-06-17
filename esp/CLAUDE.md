@@ -2,7 +2,7 @@
 
 ## Context
 
-C++ firmware for Arduino IDE / PlatformIO. Reads all sensors every 5 seconds, publishes via MQTT, and drives the buzzer/OLED based on the state received from the backend.
+C++ firmware for Arduino IDE / PlatformIO. Reads all sensors every 5 seconds, publishes via MQTT, and drives the OLED based on the state received from the backend.
 
 This file is an orientation guide. Detailed specs live in `docs/`:
 

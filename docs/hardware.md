@@ -10,8 +10,6 @@
 | Rain sensor | 1 | Precipitation detection (digital) |
 | LDR | 1 | Light level — analog (lux) via ADS1115 (channel A3) |
 | HL-69 soil moisture sensor | 1 | Soil moisture — analog via ADS1115 |
-| 10k potentiometer | 1 | Fine adjustment / general use |
-| Active buzzer | 1 | Sound alerts (optional — not installed in this build) |
 | Push button | 2 | BTN1: wake/mode — BTN2: manual watering |
 | 1kΩ resistors | 10 | MQ135/LDR voltage divider |
 | 10kΩ resistors | 10 | Button pull-down |

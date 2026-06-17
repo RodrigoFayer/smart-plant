@@ -22,5 +22,3 @@ low value:
 int raw = adsToRaw10(ads.readADC_SingleEnded(ADS_CH_SOIL)); // 0–1023
 int moisture = soilMoisturePercent(raw);                    // invert + clamp to 0–100%
 ```
-
-> The 10k potentiometer remains available in the kit for general use (brightness adjustment, local threshold, etc).

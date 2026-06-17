@@ -7,7 +7,7 @@
 //
 // Prints, once per second:
 //   - I2C scan (expects 0x3C OLED + 0x48 ADS1115)
-//   - ADS1115 A0..A3 raw counts + volts (soil, MQ135, LDR1, LDR2)
+//   - ADS1115 A0..A3 raw counts + volts (soil, MQ135, A2 unused, LDR)
 //   - DHT11 temperature / humidity
 //   - rain digital (LOW = rain)
 //   - BTN1 / BTN2 state (HIGH = pressed, with the 10k pull-down)
