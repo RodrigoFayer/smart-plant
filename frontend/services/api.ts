@@ -37,3 +37,9 @@ export async function fetchHistory(sensor: string, period: HistoryPeriod = '24h'
   if (!res.ok) throw new Error(`Failed to fetch history: ${res.status}`);
   return res.json();
 }
+
+export async function logWatering(): Promise<void> {
+  const backendUrl = useSettingsStore.getState().backendUrl;
+  const res = await fetch(`${backendUrl}/watering`, { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to log watering: ${res.status}`);
+}

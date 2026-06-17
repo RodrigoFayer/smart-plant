@@ -171,17 +171,4 @@ describe('useSocket', () => {
 
     expect(mockSocket.disconnect).toHaveBeenCalled();
   });
-
-  it('reconnects to the new backend URL when it changes', async () => {
-    await renderHook(() => useSocket());
-
-    expect(mockIo).toHaveBeenLastCalledWith(BACKEND_URL);
-
-    await act(async () => {
-      await useSettingsStore.getState().setBackendUrl('http://10.0.0.5:3000');
-    });
-
-    expect(mockSocket.disconnect).toHaveBeenCalled();
-    expect(mockIo).toHaveBeenLastCalledWith('http://10.0.0.5:3000');
-  });
 });

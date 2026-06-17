@@ -1,30 +1,35 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
-import { DEFAULT_BACKEND_URL } from '../../constants/env';
+import { LANGUAGES } from '../../constants/i18n';
 import { useSettingsStore } from '../../store/settingsStore';
+
+jest.mock('expo-router', () => ({ Stack: { Screen: () => null } }));
 
 import SettingsScreen from '../../app/settings';
 
 describe('SettingsScreen', () => {
   beforeEach(() => {
-    useSettingsStore.setState({ backendUrl: DEFAULT_BACKEND_URL, notificationsEnabled: true });
+    useSettingsStore.setState({ notificationsEnabled: true, language: 'en' });
   });
 
-  it('shows the current backend URL', async () => {
-    useSettingsStore.setState({ backendUrl: 'http://192.168.1.50:3000' });
-
+  it('lists every language option', async () => {
     const { getByTestId } = await render(<SettingsScreen />);
 
-    expect(getByTestId('backend-url-input').props.value).toBe('http://192.168.1.50:3000');
+    LANGUAGES.forEach((lang) => expect(getByTestId(`language-option-${lang.code}`)).toBeTruthy());
   });
 
-  it('saves a new backend URL', async () => {
+  it('changes and persists the language', async () => {
     const { getByTestId } = await render(<SettingsScreen />);
 
-    await fireEvent.changeText(getByTestId('backend-url-input'), 'http://10.0.0.5:3000');
-    await fireEvent.press(getByTestId('save-backend-url-button'));
+    await fireEvent.press(getByTestId('language-option-pt-BR'));
 
-    await waitFor(() => expect(useSettingsStore.getState().backendUrl).toBe('http://10.0.0.5:3000'));
+    await waitFor(() => expect(useSettingsStore.getState().language).toBe('pt-BR'));
+  });
+
+  it('no longer shows a backend URL field (configured via .env)', async () => {
+    const { queryByTestId } = await render(<SettingsScreen />);
+
+    expect(queryByTestId('backend-url-input')).toBeNull();
   });
 
   it('shows the notifications switch reflecting the stored preference', async () => {

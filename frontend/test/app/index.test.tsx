@@ -42,7 +42,10 @@ jest.mock('../../components/AlertBanner', () => ({
   },
 }));
 
-import HomeScreen, { formatRelativeTime, STATE_MESSAGES } from '../../app/index';
+jest.mock('../../services/api', () => ({ logWatering: jest.fn(() => Promise.resolve()) }));
+
+import HomeScreen, { STATE_MESSAGE_KEYS } from '../../app/index';
+import { formatRelativeTime, translations } from '../../constants/i18n';
 
 function sensorCardProps(getByTestId: (id: string) => any, title: string) {
   return JSON.parse(getByTestId(`sensor-card-${title}`).props.children);
@@ -116,21 +119,17 @@ describe('HomeScreen', () => {
     );
   });
 
-  it.each([
-    ['happy', STATE_MESSAGES?.happy],
-    ['thirsty', STATE_MESSAGES?.thirsty],
-    ['hot', STATE_MESSAGES?.hot],
-    ['noLight', STATE_MESSAGES?.noLight],
-    ['sick', STATE_MESSAGES?.sick],
-    ['sleeping', STATE_MESSAGES?.sleeping],
-  ] as const)('shows the Tamagotchi and message for the %s state', async (state, message) => {
-    usePlantStore.setState({ plant: { state, reason: null, color: 'green' } });
+  it.each(['happy', 'thirsty', 'hot', 'noLight', 'sick', 'sleeping'] as const)(
+    'shows the Tamagotchi and message for the %s state',
+    async (state) => {
+      usePlantStore.setState({ plant: { state, reason: null, color: 'green' } });
 
-    const { getByTestId, getByText } = await render(<HomeScreen />);
+      const { getByTestId, getByText } = await render(<HomeScreen />);
 
-    expect(getByTestId('tamagotchi').props.children).toBe(state);
-    expect(getByText(message as string)).toBeTruthy();
-  });
+      expect(getByTestId('tamagotchi').props.children).toBe(state);
+      expect(getByText(translations.en[STATE_MESSAGE_KEYS[state]])).toBeTruthy();
+    }
+  );
 
   it('defaults to the happy state when the plant state is unknown', async () => {
     usePlantStore.setState({ plant: null });
@@ -217,7 +216,7 @@ describe('HomeScreen', () => {
 
     const { getByText } = await render(<HomeScreen />);
 
-    expect(getByText('2 days ago — manual_btn')).toBeTruthy();
+    expect(getByText('2 days ago — button')).toBeTruthy();
   });
 
   it('shows a placeholder when there is no watering history', async () => {

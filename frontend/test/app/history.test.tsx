@@ -2,6 +2,8 @@ import { fireEvent, render } from '@testing-library/react-native';
 
 import { useHistory } from '../../hooks/useHistory';
 
+jest.mock('expo-router', () => ({ Stack: { Screen: () => null } }));
+
 jest.mock('../../hooks/useHistory', () => ({
   useHistory: jest.fn(),
 }));
@@ -24,10 +26,10 @@ describe('HistoryScreen', () => {
     (useHistory as jest.Mock).mockReturnValue({ data: [], isLoading: false });
   });
 
-  it('defaults to the first metric and the 24h period', async () => {
+  it('defaults to the first metric and the 1h period', async () => {
     const { getByTestId } = await render(<HistoryScreen />);
 
-    expect(useHistory).toHaveBeenCalledWith(METRICS[0].sensor, '24h');
+    expect(useHistory).toHaveBeenCalledWith(METRICS[0].sensor, '1h');
     expect(chartProps(getByTestId)).toEqual(
       expect.objectContaining({ dataKey: METRICS[0].dataKey, isLoading: false })
     );
@@ -50,7 +52,7 @@ describe('HistoryScreen', () => {
     const { getByTestId } = await render(<HistoryScreen />);
     await fireEvent.press(getByTestId(`metric-option-${soilMoisture.key}`));
 
-    expect(useHistory).toHaveBeenLastCalledWith(soilMoisture.sensor, '24h');
+    expect(useHistory).toHaveBeenLastCalledWith(soilMoisture.sensor, '1h');
     expect(chartProps(getByTestId)).toEqual(expect.objectContaining({ dataKey: soilMoisture.dataKey }));
   });
 

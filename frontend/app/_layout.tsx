@@ -24,7 +24,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="history" options={{ title: 'History' }} />
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
