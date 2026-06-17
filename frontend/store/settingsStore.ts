@@ -2,43 +2,42 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { DEFAULT_BACKEND_URL } from '../constants/env';
+import { defaultLanguage, type Language } from '../constants/i18n';
 
-export const BACKEND_URL_STORAGE_KEY = 'settings:backendUrl';
 export const NOTIFICATIONS_ENABLED_STORAGE_KEY = 'settings:notificationsEnabled';
+export const LANGUAGE_STORAGE_KEY = 'settings:language';
 
 export interface SettingsStore {
+  // Backend address is configured at build time via EXPO_PUBLIC_BACKEND_URL (.env).
   backendUrl: string;
   notificationsEnabled: boolean;
+  language: Language;
   hydrate: () => Promise<void>;
-  setBackendUrl: (url: string) => Promise<void>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
+  setLanguage: (language: Language) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
   backendUrl: DEFAULT_BACKEND_URL,
   notificationsEnabled: true,
+  language: defaultLanguage(),
   hydrate: async () => {
-    const [storedBackendUrl, storedNotificationsEnabled] = await Promise.all([
-      AsyncStorage.getItem(BACKEND_URL_STORAGE_KEY),
+    const [storedNotificationsEnabled, storedLanguage] = await Promise.all([
       AsyncStorage.getItem(NOTIFICATIONS_ENABLED_STORAGE_KEY),
+      AsyncStorage.getItem(LANGUAGE_STORAGE_KEY),
     ]);
     set((state) => ({
-      backendUrl: storedBackendUrl ?? state.backendUrl,
       notificationsEnabled:
         storedNotificationsEnabled !== null ? storedNotificationsEnabled === 'true' : state.notificationsEnabled,
+      language: (storedLanguage as Language) ?? state.language,
     }));
-  },
-  setBackendUrl: async (url) => {
-    const trimmed = url.trim();
-    if (trimmed) {
-      await AsyncStorage.setItem(BACKEND_URL_STORAGE_KEY, trimmed);
-    } else {
-      await AsyncStorage.removeItem(BACKEND_URL_STORAGE_KEY);
-    }
-    set({ backendUrl: trimmed || DEFAULT_BACKEND_URL });
   },
   setNotificationsEnabled: async (enabled) => {
     await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_STORAGE_KEY, String(enabled));
     set({ notificationsEnabled: enabled });
+  },
+  setLanguage: async (language) => {
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    set({ language });
   },
 }));

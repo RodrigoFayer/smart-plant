@@ -3,12 +3,16 @@ import { render } from '@testing-library/react-native';
 import { buildChartData, SensorChart } from '../../components/SensorChart';
 import type { HistoryReading } from '../../services/api';
 
+jest.mock('@shopify/react-native-skia', () => ({ matchFont: () => null }));
+
 jest.mock('victory-native', () => ({
   CartesianChart: ({ children, ...rest }: any) => {
     const { View } = require('react-native');
     return <View testID="sensor-chart-cartesian" {...rest} />;
   },
   Line: () => null,
+  Area: () => null,
+  Scatter: () => null,
 }));
 
 describe('buildChartData', () => {

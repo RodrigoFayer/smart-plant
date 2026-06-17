@@ -75,7 +75,7 @@ describe('useSocket', () => {
     await renderHook(() => useSocket());
 
     await act(() => {
-      handlers['sensor:update']({ sensor: 'dht11', data: { temp: 24, humidity: 62, at: 1720000000 } });
+      handlers['sensor:update']({ sensor: 'dht11', data: { temp: 24, humidity: 62 }, at: 1720000000 });
     });
 
     expect(usePlantStore.getState().dht11).toEqual({ temp: 24, humidity: 62, at: 1720000000 });
@@ -170,18 +170,5 @@ describe('useSocket', () => {
     await unmount();
 
     expect(mockSocket.disconnect).toHaveBeenCalled();
-  });
-
-  it('reconnects to the new backend URL when it changes', async () => {
-    await renderHook(() => useSocket());
-
-    expect(mockIo).toHaveBeenLastCalledWith(BACKEND_URL);
-
-    await act(async () => {
-      await useSettingsStore.getState().setBackendUrl('http://10.0.0.5:3000');
-    });
-
-    expect(mockSocket.disconnect).toHaveBeenCalled();
-    expect(mockIo).toHaveBeenLastCalledWith('http://10.0.0.5:3000');
   });
 });

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DEFAULT_BACKEND_URL } from '../../constants/env';
 import {
-  BACKEND_URL_STORAGE_KEY,
+  LANGUAGE_STORAGE_KEY,
   NOTIFICATIONS_ENABLED_STORAGE_KEY,
   useSettingsStore,
 } from '../../store/settingsStore';
@@ -10,46 +10,10 @@ import {
 describe('settingsStore', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
-    useSettingsStore.setState({ backendUrl: DEFAULT_BACKEND_URL, notificationsEnabled: true });
+    useSettingsStore.setState({ backendUrl: DEFAULT_BACKEND_URL, notificationsEnabled: true, language: 'en' });
   });
 
-  it('starts with the default backend URL', () => {
-    expect(useSettingsStore.getState().backendUrl).toBe(DEFAULT_BACKEND_URL);
-  });
-
-  it('persists a custom backend URL and updates the state', async () => {
-    await useSettingsStore.getState().setBackendUrl('http://10.0.0.5:3000');
-
-    expect(useSettingsStore.getState().backendUrl).toBe('http://10.0.0.5:3000');
-    expect(await AsyncStorage.getItem(BACKEND_URL_STORAGE_KEY)).toBe('http://10.0.0.5:3000');
-  });
-
-  it('trims whitespace before storing a custom backend URL', async () => {
-    await useSettingsStore.getState().setBackendUrl('  http://10.0.0.5:3000  ');
-
-    expect(useSettingsStore.getState().backendUrl).toBe('http://10.0.0.5:3000');
-  });
-
-  it('resets to the default and clears storage when set to a blank value', async () => {
-    await useSettingsStore.getState().setBackendUrl('http://10.0.0.5:3000');
-
-    await useSettingsStore.getState().setBackendUrl('   ');
-
-    expect(useSettingsStore.getState().backendUrl).toBe(DEFAULT_BACKEND_URL);
-    expect(await AsyncStorage.getItem(BACKEND_URL_STORAGE_KEY)).toBeNull();
-  });
-
-  it('hydrates the backend URL from storage when present', async () => {
-    await AsyncStorage.setItem(BACKEND_URL_STORAGE_KEY, 'http://10.0.0.9:3000');
-
-    await useSettingsStore.getState().hydrate();
-
-    expect(useSettingsStore.getState().backendUrl).toBe('http://10.0.0.9:3000');
-  });
-
-  it('keeps the default backend URL when there is nothing stored to hydrate', async () => {
-    await useSettingsStore.getState().hydrate();
-
+  it('exposes the backend URL from the environment', () => {
     expect(useSettingsStore.getState().backendUrl).toBe(DEFAULT_BACKEND_URL);
   });
 
@@ -72,9 +36,28 @@ describe('settingsStore', () => {
     expect(useSettingsStore.getState().notificationsEnabled).toBe(false);
   });
 
-  it('keeps the default notifications preference when there is nothing stored to hydrate', async () => {
+  it('defaults the language to English when the device locale is English', () => {
+    expect(useSettingsStore.getState().language).toBe('en');
+  });
+
+  it('persists the selected language', async () => {
+    await useSettingsStore.getState().setLanguage('pt-BR');
+
+    expect(useSettingsStore.getState().language).toBe('pt-BR');
+    expect(await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('pt-BR');
+  });
+
+  it('hydrates the language from storage', async () => {
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, 'pt-BR');
+
     await useSettingsStore.getState().hydrate();
 
-    expect(useSettingsStore.getState().notificationsEnabled).toBe(true);
+    expect(useSettingsStore.getState().language).toBe('pt-BR');
+  });
+
+  it('keeps the current language when there is nothing stored to hydrate', async () => {
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().language).toBe('en');
   });
 });

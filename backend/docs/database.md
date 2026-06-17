@@ -4,7 +4,7 @@
 -- Raw readings from each sensor
 CREATE TABLE readings (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  sensor     TEXT NOT NULL,          -- 'dht11', 'bmp180', etc.
+  sensor     TEXT NOT NULL,          -- 'dht11', 'soil', etc.
   payload    TEXT NOT NULL,          -- stringified JSON
   created_at INTEGER NOT NULL        -- Unix epoch (Date.now())
 );

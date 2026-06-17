@@ -5,7 +5,7 @@ Built via TDD — see [`test/plantLogic.test.js`](../test/plantLogic.test.js) fo
 The `calculatePlantState(readings)` function receives the latest snapshot of all sensors and returns the current state:
 
 ```javascript
-// readings = { temp, airHumidity, soilMoisture, lux, ppm, rain, pressure }
+// readings = { temp, airHumidity, soilMoisture, lux, ppm, rain }
 // returns  = { state, reason, color }
 
 export function calculatePlantState(readings) {
@@ -28,7 +28,7 @@ export function calculatePlantState(readings) {
 
 ## Contract
 
-- **Input**: `readings` — latest in-memory snapshot with at least `{ temp, soilMoisture, lux, ppm }` (the function ignores `airHumidity`, `rain` and `pressure`; they exist in the snapshot for other consumers)
+- **Input**: `readings` — latest in-memory snapshot with at least `{ temp, soilMoisture, lux, ppm }` (the function ignores `airHumidity` and `rain`; they exist in the snapshot for other consumers)
 - **Output**: `{ state, reason, color }`
   - `state`: one of `'happy' | 'thirsty' | 'hot' | 'noLight' | 'sick'` (the `'sleeping'` state from the [plant-health spec](../../docs/plant-health.md) is **not** decided here — it depends on time-of-day / night mode and is layered on top by the caller)
   - `reason`: `null` for `happy`, a fixed message for single-issue states, or a comma-joined list of critical issues for `sick`

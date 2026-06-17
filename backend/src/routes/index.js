@@ -19,6 +19,14 @@ export function createApp({ store, db }) {
     })
   })
 
+  app.post('/watering', (req, res) => {
+    const watering = { origin: 'app', at: Date.now() }
+    db.insertWatering(watering)
+    // Announce on the store event bus so the socket layer pushes watering:logged.
+    store.emit('watering', watering)
+    res.status(201).json(watering)
+  })
+
   app.get('/history', (req, res) => {
     const { sensor, period = '24h' } = req.query
     if (!sensor) return res.status(400).json({ error: 'sensor param is required' })

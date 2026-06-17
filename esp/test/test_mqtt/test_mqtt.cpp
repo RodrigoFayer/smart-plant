@@ -88,20 +88,20 @@ void test_payload_rain_not_detected() {
 
 void test_payload_ldr_nominal() {
     char buf[64];
-    buildPayloadLdr(buf, sizeof(buf), 680, 540);
-    TEST_ASSERT_EQUAL_STRING("{\"left\":680,\"right\":540}", buf);
+    buildPayloadLdr(buf, sizeof(buf), 610);
+    TEST_ASSERT_EQUAL_STRING("{\"lux\":610}", buf);
 }
 
-void test_payload_ldr_both_zero() {
+void test_payload_ldr_zero() {
     char buf[64];
-    buildPayloadLdr(buf, sizeof(buf), 0, 0);
-    TEST_ASSERT_EQUAL_STRING("{\"left\":0,\"right\":0}", buf);
+    buildPayloadLdr(buf, sizeof(buf), 0);
+    TEST_ASSERT_EQUAL_STRING("{\"lux\":0}", buf);
 }
 
-void test_payload_ldr_max_values() {
+void test_payload_ldr_max_value() {
     char buf[64];
-    buildPayloadLdr(buf, sizeof(buf), 1023, 1023);
-    TEST_ASSERT_EQUAL_STRING("{\"left\":1023,\"right\":1023}", buf);
+    buildPayloadLdr(buf, sizeof(buf), 1000);
+    TEST_ASSERT_EQUAL_STRING("{\"lux\":1000}", buf);
 }
 
 // ─── buildPayloadSoil ────────────────────────────────────────────────────────
@@ -160,8 +160,8 @@ int main() {
     RUN_TEST(test_payload_rain_not_detected);
 
     RUN_TEST(test_payload_ldr_nominal);
-    RUN_TEST(test_payload_ldr_both_zero);
-    RUN_TEST(test_payload_ldr_max_values);
+    RUN_TEST(test_payload_ldr_zero);
+    RUN_TEST(test_payload_ldr_max_value);
 
     RUN_TEST(test_payload_soil_nominal);
     RUN_TEST(test_payload_soil_boundaries);

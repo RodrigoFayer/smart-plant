@@ -2,14 +2,13 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { MockSensorSource } from '../../src/mock/sensorSource.js'
 
-const KNOWN_SENSORS = ['dht11', 'bmp180', 'mq135', 'rain', 'ldr', 'soil']
+const KNOWN_SENSORS = ['dht11', 'mq135', 'rain', 'ldr', 'soil']
 
 const SHAPE_BY_SENSOR = {
   dht11:  (data) => assert.deepEqual(Object.keys(data).sort(), ['humidity', 'temp']),
-  bmp180: (data) => assert.deepEqual(Object.keys(data).sort(), ['altitude', 'pressure']),
   mq135:  (data) => assert.deepEqual(Object.keys(data).sort(), ['ppm']),
   rain:   (data) => assert.deepEqual(Object.keys(data).sort(), ['detected']),
-  ldr:    (data) => assert.deepEqual(Object.keys(data).sort(), ['left', 'right']),
+  ldr:    (data) => assert.deepEqual(Object.keys(data).sort(), ['lux']),
   soil:   (data) => assert.deepEqual(Object.keys(data).sort(), ['moisture']),
 }
 
@@ -153,10 +152,6 @@ test('generates plausible values within documented ranges across many ticks', (t
           assert.ok(data.temp >= 18 && data.temp <= 32, `temp out of range: ${data.temp}`)
           assert.ok(data.humidity >= 30 && data.humidity <= 80, `humidity out of range: ${data.humidity}`)
           break
-        case 'bmp180':
-          assert.ok(data.pressure >= 990 && data.pressure <= 1030, `pressure out of range: ${data.pressure}`)
-          assert.equal(data.altitude, 0)
-          break
         case 'mq135':
           assert.ok(data.ppm >= 100 && data.ppm <= 900, `ppm out of range: ${data.ppm}`)
           break
@@ -164,8 +159,7 @@ test('generates plausible values within documented ranges across many ticks', (t
           assert.equal(typeof data.detected, 'boolean')
           break
         case 'ldr':
-          assert.ok(data.left >= 0 && data.left <= 1023, `left out of range: ${data.left}`)
-          assert.ok(data.right >= 0 && data.right <= 1023, `right out of range: ${data.right}`)
+          assert.ok(data.lux >= 0 && data.lux <= 1000, `lux out of range: ${data.lux}`)
           break
         case 'soil':
           assert.ok(data.moisture >= 0 && data.moisture <= 100, `moisture out of range: ${data.moisture}`)

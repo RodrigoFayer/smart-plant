@@ -22,7 +22,7 @@ Built via TDD — see [`test/store.test.js`](../test/store.test.js) for the full
 
 ## Building the snapshot for `calculatePlantState`
 
-Raw sensor payloads don't line up 1:1 with the `{ temp, airHumidity, soilMoisture, lux, ppm, rain, pressure }` shape `calculatePlantState` expects — the store maps them:
+Raw sensor payloads don't line up 1:1 with the `{ temp, airHumidity, soilMoisture, lux, ppm, rain }` shape `calculatePlantState` expects — the store maps them:
 
 | Snapshot field | Derived from |
 |---|---|
@@ -30,22 +30,21 @@ Raw sensor payloads don't line up 1:1 with the `{ temp, airHumidity, soilMoistur
 | `soilMoisture` | `soil.moisture` |
 | `ppm` | `mq135.ppm` |
 | `rain` | `rain.detected` |
-| `pressure` | `bmp180.pressure` |
-| `lux` | derived from `ldr.{left,right}` — see below |
+| `lux` | `ldr.lux` |
 
-### Deriving `lux` from the LDR
+### The `lux` reading
 
-The `ldr` sensor reports raw 10-bit ADC values `{ left, right }` (0–1023), where a **lower** reading means **more** light hitting a typical voltage-divider LDR circuit. The store inverts and scales their average onto a 0–1000 "lux-like" range that the threshold checks in `calculatePlantState` (`lux < 50`, `lux < 100`) can reason about directly:
+The ESP reads a single LDR through the ADS1115 and sends `{ lux }` already converted
+to a 0–1000 scale (a higher value means more light). The store passes it straight through
+as the `lux` value the threshold checks in `calculatePlantState` (`lux < 50`, `lux < 100`)
+reason about.
 
-```javascript
-lux = round(((1023 - avg(left, right)) / 1023) * 1000)
-```
-
-So `{ left: 1023, right: 1023 }` (pitch dark) → `lux 0`, and `{ left: 0, right: 0 }` (full brightness) → `lux 1000`. This is a relative scale for threshold comparisons, not a calibrated photometric measurement — there's no real lux meter to calibrate against.
+So `{ lux: 0 }` (pitch dark) → `lux 0`, and `{ lux: 1000 }` (full brightness) → `lux 1000`.
+This is a relative scale for threshold comparisons, not a calibrated photometric measurement.
 
 ## When does `getState()` stop being `null`?
 
-Only once the store has received at least one reading from every sensor `calculatePlantState` actually uses — `dht11`, `soil`, `mq135` and `ldr` (the function ignores `airHumidity`, `rain` and `pressure`, so those aren't required to complete the snapshot). Until then `getState()` returns `null`, so the API/Socket.IO layer can represent "the system just booted, we don't know yet" instead of reporting a misleading `happy`.
+Only once the store has received at least one reading from every sensor `calculatePlantState` actually uses — `dht11`, `soil`, `mq135` and `ldr` (the function ignores `airHumidity` and `rain`, so those aren't required to complete the snapshot). Until then `getState()` returns `null`, so the API/Socket.IO layer can represent "the system just booted, we don't know yet" instead of reporting a misleading `happy`.
 
 ## The `'state'` change event
 

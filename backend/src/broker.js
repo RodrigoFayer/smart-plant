@@ -4,10 +4,33 @@ import { dispatchMessage } from './handlers/index.js'
 
 export function handlePublish(packet, client, { store, db }) {
   if (!client) return
+
+  if (packet.topic === 'plant/commands') {
+    handleCommand(packet.payload, { store, db })
+    return
+  }
+
   const reading = dispatchMessage(packet.topic, packet.payload)
   if (!reading) return
   store.ingest(reading)
   db.insertReading({ sensor: reading.sensor, data: reading.data, at: Date.now() })
+}
+
+// Handles ESP → backend commands (plant/commands). Currently only manual
+// watering from BTN2: persist it and announce it on the store event bus so the
+// socket layer can push a watering:logged event to the app.
+function handleCommand(rawPayload, { store, db }) {
+  let payload
+  try {
+    payload = JSON.parse(rawPayload.toString())
+  } catch {
+    return
+  }
+  if (payload?.action !== 'manual_watering') return
+
+  const watering = { origin: 'manual_btn', at: Date.now() }
+  db.insertWatering(watering)
+  store.emit('watering', watering)
 }
 
 export async function startBroker(port, { store, db }) {

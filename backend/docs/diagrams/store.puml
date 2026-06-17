@@ -13,7 +13,7 @@ Store -> Listeners: emit('reading', { sensor, data, at })
 alt snapshot incomplete\n(missing dht11 / soil / mq135 / ldr)
   Store --> Source: getState() → null
 else snapshot complete
-  Store -> Store: buildSnapshot(readings)\n(maps raw readings, derives lux from ldr)
+  Store -> Store: buildSnapshot(readings)\n(maps raw readings, lux from ldr.lux)
   Store -> Logic: calculatePlantState(snapshot)
   Logic --> Store: { state, reason, color }
 

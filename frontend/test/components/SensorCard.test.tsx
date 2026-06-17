@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 
 import { SensorCard } from '../../components/SensorCard';
 import { STATUS_COLORS } from '../../constants/thresholds';
+import { formatBrasiliaTime } from '../../utils/formatTime';
 
 jest.mock('@expo/vector-icons', () => {
   const { Text: RNText } = require('react-native');
@@ -53,9 +54,7 @@ describe('SensorCard', () => {
   it('renders the formatted update time', async () => {
     const { getByText } = await render(<SensorCard {...baseProps} />);
 
-    const expected = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(
-      new Date(baseProps.updatedAt)
-    );
+    const expected = formatBrasiliaTime(baseProps.updatedAt);
     expect(getByText(expected)).toBeTruthy();
   });
 });

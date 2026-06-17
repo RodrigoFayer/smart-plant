@@ -3,21 +3,15 @@ import { calculatePlantState } from './plantLogic.js'
 
 const REQUIRED_SENSORS = ['dht11', 'soil', 'ldr', 'mq135']
 
-function deriveLux({ left, right }) {
-  const avg = (left + right) / 2
-  return Math.round(((1023 - avg) / 1023) * 1000)
-}
-
 function buildSnapshot(readings) {
-  const { dht11, soil, ldr, mq135, rain, bmp180 } = readings
+  const { dht11, soil, ldr, mq135, rain } = readings
   return {
     temp: dht11?.temp,
     airHumidity: dht11?.humidity,
     soilMoisture: soil?.moisture,
-    lux: ldr && deriveLux(ldr),
+    lux: ldr?.lux,
     ppm: mq135?.ppm,
     rain: rain?.detected,
-    pressure: bmp180?.pressure,
   }
 }
 

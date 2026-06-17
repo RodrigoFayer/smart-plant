@@ -29,7 +29,7 @@ One function per sensor — each produces the exact JSON shape the backend's `pa
 | `buildPayloadDht11` | `(buf, size, int temp, int humidity)` | `{"temp":24,"humidity":62}` |
 | `buildPayloadMq135` | `(buf, size, int ppm)` | `{"ppm":320}` |
 | `buildPayloadRain` | `(buf, size, bool detected)` | `{"detected":true}` |
-| `buildPayloadLdr` | `(buf, size, int left, int right)` | `{"left":680,"right":540}` |
+| `buildPayloadLdr` | `(buf, size, int lux)` | `{"lux":610}` |
 | `buildPayloadSoil` | `(buf, size, int moisture)` | `{"moisture":45}` |
 
 `buildPayloadSoil` takes the already-converted moisture percentage from `soilMoisturePercent()` in [`sensors.h`](sensors.md) — not the raw ADC value.
@@ -39,9 +39,6 @@ One function per sensor — each produces the exact JSON shape the backend's `pa
 Builds a `plant/commands` payload for BTN1/BTN2 events:
 
 ```cpp
-buildPayloadCommand(buf, sizeof(buf), "mute", 0);
-// → {"action":"mute"}
-
 buildPayloadCommand(buf, sizeof(buf), "manual_watering", 1720000000UL);
 // → {"action":"manual_watering","timestamp":1720000000}
 ```

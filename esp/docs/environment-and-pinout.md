@@ -19,6 +19,7 @@ lib_deps =
     adafruit/DHT sensor library   ; DHT11
     adafruit/Adafruit SSD1306     ; OLED
     adafruit/Adafruit GFX Library
+    adafruit/Adafruit ADS1X15     ; external I2C ADC (analog sensors)
     arduino-libraries/NTPClient   ; time for night mode
 ```
 
@@ -26,15 +27,24 @@ lib_deps =
 
 | ESP pin | Component | Notes |
 |---|---|---|
-| D0 (GPIO16) | MQ135 (DO) | LM393 digital threshold (LOW = poor air quality) |
-| D1 (GPIO5) | SCL | I2C — OLED |
-| D2 (GPIO4) | SDA | I2C — OLED |
+| D1 (GPIO5) | SCL | I2C — OLED (0x3C) + ADS1115 (0x48) |
+| D2 (GPIO4) | SDA | I2C — OLED (0x3C) + ADS1115 (0x48) |
 | D3 (GPIO0) | DHT11 | Data |
-| D4 (GPIO2) | Buzzer | Active — HIGH = on |
+| D4 (GPIO2) | — | Free (buzzer not installed) |
 | D5 (GPIO14) | Rain sensor (DO) | LM393 digital OUT (LOW = rain) |
 | D6 (GPIO12) | BTN1 | 10kΩ pull-down to GND |
 | D7 (GPIO13) | BTN2 | 10kΩ pull-down to GND |
-| A0 | HL-69 (AO) | Analog soil-moisture reading |
-| D8 (GPIO15) | Left LDR | Voltage divider (digital threshold) |
+| A0, D0, D8 | — | Free (analog sensors moved to the ADS1115) |
 
-> The ESP8266 has a single ADC (A0), already used by the soil sensor. LDR and MQ135 are read as digital threshold comparators instead. A second LDR (right) is deferred — no free GPIO left for it.
+### Analog sensors — on the ADS1115 (I2C 0x48)
+
+| ADS1115 channel | Component | Notes |
+|---|---|---|
+| A0 | HL-69 (AO) | Soil moisture |
+| A1 | MQ135 (AO) | Air quality — real ppm |
+| A2 | — | Unused |
+| A3 | LDR | Voltage divider — lux |
+
+> The ESP8266 has a single native ADC (A0), so the three analog sensors share an external
+> ADS1115 on the I2C bus. This frees the ESP's A0/D0/D8. A single LDR is wired on A3 (A2 is unused).
+> Full wiring and breadboard layout: [wiring.md](wiring.md).

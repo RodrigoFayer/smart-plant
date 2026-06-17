@@ -17,8 +17,8 @@ void buildPayloadRain(char* buf, size_t size, bool detected) {
     snprintf(buf, size, "{\"detected\":%s}", detected ? "true" : "false");
 }
 
-void buildPayloadLdr(char* buf, size_t size, int left, int right) {
-    snprintf(buf, size, "{\"left\":%d,\"right\":%d}", left, right);
+void buildPayloadLdr(char* buf, size_t size, int lux) {
+    snprintf(buf, size, "{\"lux\":%d}", lux);
 }
 
 void buildPayloadSoil(char* buf, size_t size, int moisture) {

@@ -42,15 +42,60 @@ test('dispatches a valid sensor packet to store.ingest and db.insertReading', ()
   assert.equal(typeof db.calls[0].at, 'number')
 })
 
-test('skips store.ingest and db.insertReading when the topic is unknown', () => {
+test('skips store.ingest and db.insertReading for an unknown sensor topic', () => {
   const store = makeStore()
   const db = makeDb()
   const client = { id: 'esp-01' }
 
-  handlePublish(packet('plant/commands', { action: 'mute' }), client, { store, db })
+  handlePublish(packet('plant/sensors/unknown', { foo: 1 }), client, { store, db })
 
   assert.equal(store.calls.length, 0)
   assert.equal(db.calls.length, 0)
+})
+
+// ── plant/commands (ESP → backend) ──────────────────────────────────────────
+
+function makeCommandFakes() {
+  const events = []
+  const waterings = []
+  const store = { ingest: () => {}, emit: (name, payload) => events.push({ name, payload }) }
+  const db = { insertReading: () => {}, insertWatering: (row) => waterings.push(row) }
+  return { store, db, events, waterings }
+}
+
+test('records a manual_watering command and announces it on the store bus', () => {
+  const { store, db, events, waterings } = makeCommandFakes()
+  const client = { id: 'esp-01' }
+
+  handlePublish(packet('plant/commands', { action: 'manual_watering', timestamp: 1720000000 }), client, { store, db })
+
+  assert.equal(waterings.length, 1)
+  assert.equal(waterings[0].origin, 'manual_btn')
+  assert.equal(typeof waterings[0].at, 'number')
+
+  assert.equal(events.length, 1)
+  assert.equal(events[0].name, 'watering')
+  assert.deepEqual(events[0].payload, waterings[0])
+})
+
+test('ignores plant/commands actions other than manual_watering', () => {
+  const { store, db, events, waterings } = makeCommandFakes()
+  const client = { id: 'esp-01' }
+
+  handlePublish(packet('plant/commands', { action: 'mute' }), client, { store, db })
+
+  assert.equal(waterings.length, 0)
+  assert.equal(events.length, 0)
+})
+
+test('ignores a malformed plant/commands payload', () => {
+  const { store, db, events, waterings } = makeCommandFakes()
+  const client = { id: 'esp-01' }
+
+  handlePublish({ topic: 'plant/commands', payload: Buffer.from('{bad json') }, client, { store, db })
+
+  assert.equal(waterings.length, 0)
+  assert.equal(events.length, 0)
 })
 
 test('skips store.ingest and db.insertReading when the payload is malformed', () => {
@@ -79,14 +124,13 @@ test('skips store.ingest and db.insertReading when sensor validation fails', () 
   assert.equal(db.calls.length, 0)
 })
 
-test('routes all six documented sensor topics to store.ingest', () => {
+test('routes all five documented sensor topics to store.ingest', () => {
   const cases = [
-    ['plant/sensors/dht11',  { temp: 24, humidity: 62 },      'dht11'],
-    ['plant/sensors/bmp180', { pressure: 1013, altitude: 0 }, 'bmp180'],
-    ['plant/sensors/mq135',  { ppm: 320 },                    'mq135'],
-    ['plant/sensors/rain',   { detected: true },              'rain'],
-    ['plant/sensors/ldr',    { left: 680, right: 540 },       'ldr'],
-    ['plant/sensors/soil',   { moisture: 45 },                'soil'],
+    ['plant/sensors/dht11',  { temp: 24, humidity: 62 }, 'dht11'],
+    ['plant/sensors/mq135',  { ppm: 320 },               'mq135'],
+    ['plant/sensors/rain',   { detected: true },         'rain'],
+    ['plant/sensors/ldr',    { lux: 610 },               'ldr'],
+    ['plant/sensors/soil',   { moisture: 45 },           'soil'],
   ]
 
   for (const [topic, payload, sensor] of cases) {

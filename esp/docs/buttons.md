@@ -59,10 +59,8 @@ ButtonState btn1 = {}, btn2 = {};
 void loop() {
     unsigned long now = millis();
 
-    switch (buttonTick(btn1, digitalRead(PIN_BTN1), now)) {
-        case BTN_SHORT_PRESS: cycleDisplayMode(); break;
-        case BTN_LONG_PRESS:  muteBuzzer();       break;
-        default: break;
+    if (buttonTick(btn1, digitalRead(PIN_BTN1), now) == BTN_SHORT_PRESS) {
+        wakeDisplay();
     }
 
     if (buttonTick(btn2, digitalRead(PIN_BTN2), now) == BTN_SHORT_PRESS) {

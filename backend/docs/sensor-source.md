@@ -18,7 +18,7 @@ Every source is an `EventEmitter` exposing:
 | `start()` | Begins producing readings |
 | `stop()` | Stops producing readings (idempotent, safe to call without a prior `start()`) |
 
-`sensor` is one of `dht11`, `bmp180`, `mq135`, `rain`, `ldr`, `soil`. `data` matches the documented MQTT payload shape for that sensor in [`docs/architecture.md`](../../docs/architecture.md) (e.g. `dht11` → `{ temp, humidity }`, `soil` → `{ moisture }`).
+`sensor` is one of `dht11`, `mq135`, `rain`, `ldr`, `soil`. `data` matches the documented MQTT payload shape for that sensor in [`docs/architecture.md`](../../docs/architecture.md) (e.g. `dht11` → `{ temp, humidity }`, `soil` → `{ moisture }`).
 
 ## MockSensorSource
 
@@ -27,10 +27,9 @@ Every source is an `EventEmitter` exposing:
 | Sensor | Generated data | Range |
 |---|---|---|
 | `dht11` | `{ temp, humidity }` | temp 18–32°C, humidity 30–80% |
-| `bmp180` | `{ pressure, altitude }` | pressure 990–1030 hPa, altitude fixed at 0 |
 | `mq135` | `{ ppm }` | 100–900 ppm |
 | `rain` | `{ detected }` | boolean, ~10% chance of `true` per tick |
-| `ldr` | `{ left, right }` | 0–1023 (10-bit ADC range) |
+| `ldr` | `{ lux }` | 0–1000 lux |
 | `soil` | `{ moisture }` | 0–100% |
 
 ## Future: MqttSensorSource

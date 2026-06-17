@@ -15,10 +15,9 @@ Six pure functions, one per sensor, each taking an **already-JSON-parsed** value
 | Function | File | Valid shape | Field types |
 |---|---|---|---|
 | `parseDht11` | `dht11.js` | `{ temp, humidity }` | both `number` |
-| `parseBmp180` | `bmp180.js` | `{ pressure, altitude }` | both `number` |
 | `parseMq135` | `mq135.js` | `{ ppm }` | `number` |
 | `parseRain` | `rain.js` | `{ detected }` | `boolean` |
-| `parseLdr` | `ldr.js` | `{ left, right }` | both `number` |
+| `parseLdr` | `ldr.js` | `{ lux }` | `number` (lux 0–1000) |
 | `parseSoil` | `soil.js` | `{ moisture }` | `number` |
 
 Each function:
@@ -51,7 +50,6 @@ dispatchMessage('plant/commands', '{"action":"water"}')
 | Topic | Sensor | Handler |
 |---|---|---|
 | `plant/sensors/dht11` | `dht11` | `parseDht11` |
-| `plant/sensors/bmp180` | `bmp180` | `parseBmp180` |
 | `plant/sensors/mq135` | `mq135` | `parseMq135` |
 | `plant/sensors/rain` | `rain` | `parseRain` |
 | `plant/sensors/ldr` | `ldr` | `parseLdr` |

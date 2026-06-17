@@ -42,6 +42,17 @@ jest.mock('@tanstack/react-query', () => {
   };
 });
 
+// The real SafeAreaProvider renders nothing until it measures insets, which never
+// happens in the test renderer — so its children (the whole tree under test) would
+// never mount. Mock it to render children synchronously.
+jest.mock('react-native-safe-area-context', () => {
+  const { View } = require('react-native');
+  return {
+    SafeAreaProvider: ({ children }: { children?: ReactNode }) => <View>{children}</View>,
+    SafeAreaView: ({ children }: { children?: ReactNode }) => <View>{children}</View>,
+  };
+});
+
 import RootLayout from '../../app/_layout';
 
 describe('RootLayout', () => {
