@@ -60,33 +60,9 @@ static void renderNormal(int soil, int temp, int lux) {
     oled.dim(false);
     oled.clearDisplay();
 
-    // Tamagotchi expression — left side, large
-    TamagotchiExpr expr = stateToExpression(plantState);
-    oled.setTextSize(2);
-    oled.setCursor(0, 10);
-    oled.print(exprSymbols[expr]);
-
-    // Three vertical sensor bars — right side (soil / temp / lux)
-    int soilPx = sensorBarHeight(soil, 0,   100,  40);
-    int tempPx = sensorBarHeight(temp, 0,   40,   40);
-    int luxPx  = sensorBarHeight(lux,  0,   1000, 40);
-    oled.fillRect(88,  40 - soilPx, 10, soilPx, SSD1306_WHITE);
-    oled.fillRect(102, 40 - tempPx, 10, tempPx, SSD1306_WHITE);
-    oled.fillRect(116, 40 - luxPx,  10, luxPx,  SSD1306_WHITE);
-
-    // Bar labels
+    // Top: raw DHT11 + soil readings (visible without a serial monitor).
     oled.setTextSize(1);
-    oled.setCursor(88,  52); oled.print("S");
-    oled.setCursor(102, 52); oled.print("T");
-    oled.setCursor(116, 52); oled.print("L");
-
-    // Footer message
-    oled.setCursor(0, 56);
-    oled.print(stateToFooter(plantState));
-
-    // Show raw DHT11 reading and soil ADC value so they're visible
-    // without a serial monitor.
-    oled.setCursor(40, 0);
+    oled.setCursor(0, 0);
     if (dhtOk) {
         oled.print("DHT ");
         oled.print(lastTemp);
@@ -97,9 +73,38 @@ static void renderNormal(int soil, int temp, int lux) {
     } else {
         oled.print("DHT ERR");
     }
-    oled.setCursor(40, 8);
+    oled.setCursor(0, 8);
     oled.print("Soil raw:");
     oled.print(lastSoilRaw);
+
+    // Tamagotchi expression — left side, large
+    oled.setTextSize(2);
+    oled.setCursor(0, 22);
+    oled.print(exprSymbols[stateToExpression(plantState)]);
+
+    // Three vertical sensor gauges — right side, baseline y=44 (clear of the
+    // top text). Each draws an outline frame plus a fill for the current value.
+    const int base = 44, barH = 26;
+    const int xs[3] = { 88, 102, 116 };
+    int px[3] = {
+        sensorBarHeight(soil, 0, 100,  barH),
+        sensorBarHeight(temp, 0, 40,   barH),
+        sensorBarHeight(lux,  0, 1000, barH),
+    };
+    for (int i = 0; i < 3; i++) {
+        oled.drawRect(xs[i], base - barH,   10, barH,   SSD1306_WHITE);
+        oled.fillRect(xs[i], base - px[i],  10, px[i],  SSD1306_WHITE);
+    }
+
+    // Gauge labels just below the bars
+    oled.setTextSize(1);
+    oled.setCursor(90,  46); oled.print("S");
+    oled.setCursor(104, 46); oled.print("T");
+    oled.setCursor(118, 46); oled.print("L");
+
+    // Footer message — full width along the bottom, clear of the labels
+    oled.setCursor(0, 56);
+    oled.print(stateToFooter(plantState));
 
     oled.display();
 }
