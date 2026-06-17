@@ -73,6 +73,29 @@ test('GET /status returns null lastWatering when no watering has been recorded',
   })
 })
 
+// ─── POST /watering ────────────────────────────────────────────────────────────
+
+test('POST /watering records an app watering and announces it on the store bus', async () => {
+  const events = []
+  const waterings = []
+  const store = { ...makeStore(), emit: (name, payload) => events.push({ name, payload }) }
+  const db = { ...makeDb(), insertWatering: (row) => waterings.push(row) }
+
+  await withServer(store, db, async (base) => {
+    const res = await fetch(`${base}/watering`, { method: 'POST' })
+    assert.equal(res.status, 201)
+    const body = await res.json()
+    assert.equal(body.origin, 'app')
+    assert.equal(typeof body.at, 'number')
+  })
+
+  assert.equal(waterings.length, 1)
+  assert.equal(waterings[0].origin, 'app')
+  assert.equal(events.length, 1)
+  assert.equal(events[0].name, 'watering')
+  assert.deepEqual(events[0].payload, waterings[0])
+})
+
 // ─── GET /history ─────────────────────────────────────────────────────────────
 
 test('GET /history returns readings for the requested sensor and period', async () => {
