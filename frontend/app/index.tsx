@@ -21,7 +21,7 @@ export const STATE_MESSAGES: Record<PlantState, string> = {
   sleeping: 'Zzz... 😴',
 };
 
-const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
+const RELATIVE_TIME_DIVISIONS: { amount: number; unit: string }[] = [
   { amount: 60, unit: 'seconds' },
   { amount: 60, unit: 'minutes' },
   { amount: 24, unit: 'hours' },
@@ -31,18 +31,27 @@ const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUn
   { amount: Infinity, unit: 'years' },
 ];
 
+// Hand-rolled relative-time formatting. We can't use Intl.RelativeTimeFormat:
+// the Hermes JS engine (React Native) ships without it, so `new
+// Intl.RelativeTimeFormat(...)` throws "undefined is not a constructor".
+function formatRelativeUnit(value: number, unit: string): string {
+  const abs = Math.abs(value);
+  const singular = unit.replace(/s$/, '');
+  const label = `${abs} ${singular}${abs === 1 ? '' : 's'}`;
+  return value > 0 ? `in ${label}` : `${label} ago`;
+}
+
 export function formatRelativeTime(at: number, now: number = Date.now()): string {
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'always' });
   let duration = (at - now) / 1000;
 
   for (const { amount, unit } of RELATIVE_TIME_DIVISIONS) {
     if (Math.abs(duration) < amount) {
-      return rtf.format(Math.round(duration), unit);
+      return formatRelativeUnit(Math.round(duration), unit);
     }
     duration /= amount;
   }
 
-  return rtf.format(Math.round(duration), 'years');
+  return formatRelativeUnit(Math.round(duration), 'years');
 }
 
 function statusFor(sensor: 'temp' | 'airHumidity' | 'lux' | 'ppm', value: number | undefined): SensorStatus {

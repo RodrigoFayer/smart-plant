@@ -245,10 +245,11 @@ static void handleBtn1Short() {
 
 static void handleBtn2Short() {
     unsigned long epoch = ntp.getEpochTime();
-    char topic[48], payload[80];
-    buildTopic(topic, sizeof(topic), "commands");
+    char payload[80];
     buildPayloadCommand(payload, sizeof(payload), "manual_watering", epoch);
-    mqttClient.publish(topic, payload);
+    // Commands live at plant/commands — NOT the plant/sensors/* namespace that
+    // buildTopic() produces. The backend broker only handles plant/commands.
+    mqttClient.publish("plant/commands", payload);
     lastEventAt = millis();
     Serial.println("Manual watering logged");
 }
